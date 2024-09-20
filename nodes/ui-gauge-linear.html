@@ -1,0 +1,608 @@
+<script type="text/javascript">
+    RED.nodes.registerType('ui-gauge-linear', {
+        category: RED._('@flowfuse/node-red-dashboard/ui-base:ui-base.label.category'),
+        color: RED._('@flowfuse/node-red-dashboard/ui-base:ui-base.colors.dark'),
+        defaults: {
+            name: { value: "" },
+            group: { type: 'ui-group', required: true },
+            order: { value: 0 },  
+            width: {
+                value: 0,
+                validate: function (v) {
+                    const width = v || 0
+                    const currentGroup = $('#node-input-group').val() || this.group
+                    const groupNode = RED.nodes.node(currentGroup)
+                    const valid = !groupNode || +width <= +groupNode.width
+                    $('#node-input-size').toggleClass('input-error', !valid)
+                    return valid
+                }
+            },
+            height: { value: 0 },
+            min: { 
+                value: 0,      
+                required: true,
+                validate:function(v) {
+                    const max=Number($("#node-input-max").length ? $("#node-input-max").val() : this.max)
+                    return (RED.validators.number()(v) && Number(v) !== max)
+                },
+            },
+            max: { 
+                value: 10,  
+                validate:function(v) {
+                    const min=Number($("#node-input-min").length ? $("#node-input-min").val() : this.min)
+                    return (RED.validators.number()(v) && Number(v) !== min)
+                },
+            },
+            ticks: {
+                value: [], 
+                validate:function(tx) {
+                    const unique = [...new Set(tx.map(t => t.value))]
+                    const min = Number($("#node-input-min").length ? $("#node-input-min").val() : this.min)
+                    const max = Number($("#node-input-max").length ? $("#node-input-max").val() : this.max)
+                    let isValid = true
+                    if (tx.length != unique.length) {                       
+                        isValid = false
+                    }
+                    tx.forEach((tc) => {                       
+                        isValid = isValid && (Number(tc.value) > min && Number(tc.value) < max)                       
+                    })                                    
+                    return isValid
+                },
+            },
+
+            colors:{
+                value:[]
+            },
+            zeroCrossColors:{
+                value:["#ff4c16","#00e300"]
+            },
+            mode:{
+                value:"default",
+                required: true
+            },
+            minLabel: {value: ""},           
+            maxLabel: {value: ""},           
+            label: {value: "Gauge Linear"},
+            icon:{value:""},           
+            unit: {value: "°C"},
+            dim: {value: 0.2},
+            myclass: {value: ""},
+        },
+        inputs: 1,
+        outputs: 0,
+        icon: "font-awesome/fa-ellipsis-h",
+        paletteLabel: "gauge linear",
+        label: function() {
+            return this.name || "gauge linear";
+        },
+        oneditprepare: function () {
+            let node = this
+            const COLORS = ["#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#ffa916","#ffa916","#ffa916","#ffa916","#ff4c16","#ff4c16"]
+            $('#node-input-size').elementSizer({
+                width: '#node-input-width',
+                height: '#node-input-height',
+                group: '#node-input-group'
+            });
+
+            let tickList = $("#node-input-ticks-container")
+            tickList.editableList({
+                addItem: function(container, i, tick) {                   
+                    let isNew = false   
+                    if (!tick.hasOwnProperty("value")) {                       
+                        isNew = true
+                        tick = {value: "", label: ""}                        
+                    }
+                    const row =  $('<div/>', {
+                        class: 'form-row gauge-linear-list-item-row',
+                        style: 'margin-bottom: 0;'
+                    }).appendTo(container)
+
+                   const valueFiled = $('<input/>', {
+                        type: 'text',                       
+                        required: true,
+                        style: 'width:80px; margin-bottom: 0;',
+                        class: 'node-input-tick-value'
+                    }).appendTo(row)
+                    valueFiled.val(tick.value)
+
+                    valueFiled.on("change keyup paste", function() {                       
+                        validateTicks(tickList)
+                        fillLimits()
+                    });
+
+                    const labelFiled = $('<input/>', {
+                        type: 'text',
+                        style: 'width:80px; margin-bottom: 0;',
+                        class: 'node-input-tick-label'
+                    }).appendTo(row)
+                    labelFiled.val(tick.label)
+                    labelFiled.on("change keyup paste", function() {                       
+                        fillLimits()
+                    });
+                    if (isNew) {
+                        validateTicks(tickList)
+                        fillLimits()
+                    }
+                },
+
+                sortable: true,
+                removable: true, 
+                height: 'auto',
+                scrollOnAdd: true,
+                addButton: 'add tick',
+                header: $('<div>').append(
+                    $.parseHTML(
+                        "<div class='gauge-linear-list-item-row' style='margin-left:24px;'><div>Value</div><div style='width:30%; display:inline-grid;'>Label</div></div>"
+                    )
+                ),
+
+                removeItem: function(data) {                    
+                    validateTicks(tickList)
+                    fillLimits()
+                },
+
+                sortItems: function(items) {                   
+                    validateTicks(tickList)
+                }
+            })
+
+            this.ticks = this.ticks || []
+            tickList.editableList('addItems', this.ticks)
+            validateTicks(tickList)
+
+            $("#node-input-max").change(function(){
+                validateTicks(tickList)
+                hideOrShowTickFields()
+                fillLimits()
+            })
+            
+            $("#node-input-min").change(function(){
+                validateTicks(tickList)
+                hideOrShowTickFields()
+                fillLimits()
+            })
+            
+            $("#node-input-maxLabel").change(function(){               
+                fillLimits()
+            })
+           
+            $("#node-input-minLabel").change(function(){               
+                fillLimits()
+            })
+
+
+            this.colors = this.colors.length == 0 ? COLORS : this.colors
+            this.colors.forEach(c => {
+                createBarItem(c)
+            })
+
+            $("#gauge-linear-color").val(COLORS[0])
+
+            $("#gauge-linear-bar-edit-add").on("click",function( event ) { 
+                createBarItem($("#gauge-linear-color").val())
+            })
+            
+            $("#gauge-linear-bar-edit-remove").on("click",function( event ) { 
+                removeBarItem()
+            })
+            
+            $('#node-input-mode').change(function(){               
+                hideOrShowTickFields()
+                fillLimits()
+                hideOrShowZeroRange()
+            })
+
+            $("#gauge-linear-zero-color-negative").text(this.zeroCrossColors[0])
+            $("#gauge-linear-zero-color-positive").text(this.zeroCrossColors[1])
+
+            $('#gauge-linear-zero-range').change(function(){
+                const side = $(this).val()               
+                fillBarWithColor($("#gauge-linear-zero-color-"+side).text())
+                $("#gauge-linear-color").val($("#gauge-linear-zero-color-"+side).text()) 
+                fillLimits()              
+            })            
+            
+            hideOrShowZeroRange()
+        },
+        
+        oneditsave: function() {
+            let ticks = $("#node-input-ticks-container").editableList('items');
+            var node = this;
+            node.ticks = [];
+            ticks.each(function(i) {
+                node.ticks.push({
+                    value: $(this).find('.node-input-tick-value').val(),
+                    label: $(this).find('.node-input-tick-label').val()
+                })
+            });
+            node.colors = [];
+            let cells = $(".gauge-linear-bar-edit-outcome").children()
+            cells.each(function(i){
+                console.log("add",$(this).css('background-color'))
+                node.colors.push($(this).css('background-color'))
+           })
+           node.zeroCrossColors = [];
+           node.zeroCrossColors.push($("#gauge-linear-zero-color-negative").text())
+           node.zeroCrossColors.push($("#gauge-linear-zero-color-positive").text())
+        },
+    })
+    
+    function validateTicks(tickList) {
+        const valueFields = tickList.find(".node-input-tick-value")
+        const max = Number($("#node-input-max").val())
+        const min = Number($("#node-input-min").val())
+      
+        valueFields.each(function() {           
+            let valid = Number(this.value) < max && Number(this.value) > min 
+            if (!valid) {
+                $(this).css('border', '1px solid rgb(214, 97, 95)');
+            }
+            else {
+                $(this).css('border', '');
+            }
+        })
+    }
+
+    function createBarItem(color){    
+        if($(".gauge-linear-bar-edit-outcome").children().length == 60){
+            return
+        }     
+        const item = $("<div class='gauge-linear-bar-item' style='background-color:"+color+";'></div>")        
+        item.appendTo(".gauge-linear-bar-edit-outcome")
+        item.on( "mousemove", function( event ) {            
+            if(event.buttons == 1){                
+                $(this).css("background-color",$("#gauge-linear-color").val())
+                maybeApplyForMore($("#gauge-linear-color").val())
+            }
+        })
+        updateCellCount($(".gauge-linear-bar-edit-outcome").children().length)
+    }
+    
+    function removeBarItem(){
+        if($(".gauge-linear-bar-edit-outcome").children().length == 2){
+            return
+        }        
+        $(".gauge-linear-bar-edit-outcome").find("div:last").remove();
+        updateCellCount($(".gauge-linear-bar-edit-outcome").children().length)
+    }
+
+    function maybeApplyForMore(color){
+        const shouldApply = $('#node-input-mode').val() == "zeroCross";
+        const side =  $('#gauge-linear-zero-range').val()
+        if(shouldApply){  
+            fillBarWithColor(color)          
+            $('#gauge-linear-zero-color-'+side).text(color)            
+        }
+    }
+    
+    function fillBarWithColor(color){        
+        const items = $(".gauge-linear-bar-edit-outcome").children()
+        items.each(function(i){
+            $(this).css("background-color",color)
+        })
+    }
+
+    function updateCellCount(count){        
+        $(".gauge-linear-bar-edit-cell-count").text(count)
+    }
+    
+    function fillLimits(){
+        let ticks = []
+        const zeroCross = $('#node-input-mode').val() == "zeroCross";
+        const side = $('#gauge-linear-zero-range').val()
+        if(zeroCross){
+            ticks.push({value:0,label:0})
+        }
+        else{
+            ticks.push({value:$("#node-input-min").val(),label:$("#node-input-minLabel").val()})
+        }
+        
+        const getPosition = function (tv) {
+            const mi = Number($("#node-input-min").val())
+            const ma = Number($("#node-input-max").val())
+            if(zeroCross){
+                let v = Math.abs(tv)
+                let t = side == 'negative' ? Math.abs(mi) : ma
+                return Math.floor((v / t) * 100)+'%';
+            }
+            return Math.floor(((tv - mi) / (ma - mi)) * 100)+'%'
+        }
+
+        const tickItems = $("#node-input-ticks-container").editableList('items');
+        tickItems.each(function(i) {            
+            ticks.push({
+                value: $(this).find('.node-input-tick-value').val(),
+                label: $(this).find('.node-input-tick-label').val(),
+                pos: getPosition(Number($(this).find('.node-input-tick-value').val()))
+            })
+        });
+        if(zeroCross && side == "negative"){
+            ticks.push({value:$("#node-input-min").val(),label:$("#node-input-minLabel").val()})
+        }
+        else{
+            ticks.push({value:$("#node-input-max").val(),label:$("#node-input-maxLabel").val()})
+        }
+       
+        $('.gauge-linear-bar-edit-limits').empty()
+        
+        ticks.forEach(tick => {            
+            let tickval = tick.label == "" ? tick.value : tick.label
+            let ticksAllowed = true
+            if($('#node-input-mode option:selected').val() == 'zeroCross'){
+                const max = Math.abs(Number($("#node-input-max").val()))
+                const min = Math.abs(Number($("#node-input-min").val()))
+                ticksAllowed = (max - min == 0)
+            }            
+            
+            if(tick.pos){
+                if(ticksAllowed){
+                    if(zeroCross && side == "negative"){
+                        tickval *=-1
+                    }
+                    $("<div class='gauge-linear-tick-item' style='left:"+tick.pos+"'>"+tickval+"</div>").appendTo('.gauge-linear-bar-edit-limits')
+                }
+            }
+            else{
+                $("<div class='gauge-linear-tick-item'>"+tickval+"</div>").appendTo('.gauge-linear-bar-edit-limits')
+            }            
+        })
+    }
+
+    function hideOrShowTickFields(){        
+        if($('#node-input-mode option:selected').val() == 'zeroCross'){
+            const max = Math.abs(Number($("#node-input-max").val()))
+            const min = Math.abs(Number($("#node-input-min").val()))
+            const balanced = max - min           
+            if(balanced != 0){
+                $("#gauge-linear-ticks-row").hide()                
+            }
+            else{
+                $("#gauge-linear-ticks-row").show()
+            }
+        }else {
+            $("#gauge-linear-ticks-row").show()         
+        }        
+    }
+    
+    function hideOrShowZeroRange(){
+        $('.gauge-linear-zerorange').hide()
+        if($('#node-input-mode').val() == "zeroCross" ){
+            $('.gauge-linear-zerorange').show()
+            const side = $('#gauge-linear-zero-range').val()               
+            fillBarWithColor($("#gauge-linear-zero-color-"+side).text())
+            $("#gauge-linear-color").val($("#gauge-linear-zero-color-"+side).text())          
+        }
+    }
+</script>
+
+<style>
+.gauge-linear-grid-row{
+    display:grid;
+    grid-template-columns: 6ch 80px 1fr;
+    gap:.5rem;
+}
+.gauge-linear-list-item-row{
+    display:grid;
+    grid-template-columns: 80px 1fr;
+    gap:.5rem;
+}
+.gauge-linear-bar-edit-container{
+    border: 1px solid var(--red-ui-form-input-border-color);
+    border-radius: 4px;
+    padding:5px;
+}
+.gauge-linear-bar-edit-controls > div{
+    padding-bottom:4px;
+}
+.gauge-linear-bar-edit-controls select{
+    width: auto;
+}
+.gauge-linear-bar-edit-cell-count{
+    border: 1px solid var(--red-ui-form-input-border-color);
+    border-radius: 2px;
+    font-size: 10px;
+    padding: 4px;
+    color: var(--red-ui-workspace-button-color) !important;
+}
+.gauge-linear-bar-edit-buttons{
+    padding-top: 8px;
+}
+.gauge-linear-bar-edit-outcome{
+    display:flex;
+}
+.gauge-linear-bar-item{
+    height: 20px;
+    width: 100%;
+    border: 1px solid black;
+    background-color: red;
+}
+.gauge-linear-bar-edit-limits {
+    display: block;
+    position: relative;
+    font-size: smaller;
+    line-height: 1;
+    user-select: none;
+    padding-top: 2px;
+    height: .5rem;
+}
+.gauge-linear-tick-item {
+    position: absolute;
+    transform: translate(-50%, 0);
+}
+.gauge-linear-tick-item:first-child {
+    left: 0;
+    transform: translate(0, 0);
+}
+.gauge-linear-tick-item:last-child {
+    right: 0;
+    transform: translate(0, 0);
+}
+.gauge-linear-bar-edit-hidden{
+    display:none;
+}
+</style>
+
+<script type="text/html" data-template-name="ui-gauge-linear">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-group"><i class="fa fa-table"></i> Group</label>
+        <input type="text" id="node-input-group">
+    </div>
+    <div class="form-row">
+        <label><i class="fa fa-object-group"></i> <span data-i18n="ui-gauge-linear.label.size"></label>
+        <input type="hidden" id="node-input-width">
+        <input type="hidden" id="node-input-height">
+        <button class="editor-button" id="node-input-size"></button>
+    </div>
+    <div class="form-row">
+        <label for="node-input-label"><i class="fa fa-hand"></i>Label</label>
+        <input type="text" id="node-input-label" value="Gauge Linear">
+    </div>
+    <div class="form-row" >
+        <label><i class="fa fa-list"></i> Limits</label>
+        <div class="red-ui-editableList-border">
+           <div class="red-ui-editableList-header gauge-linear-grid-row" style="padding-left:15px">
+                <div></div><div>Value</div><div>Label</div>
+           </div>
+            <div class="red-ui-editableList-container">
+                <div class="red-ui-editableList-container gauge-linear-grid-row" style="border-bottom: 1px solid var(--red-ui-form-input-border-color);">
+                        <label for="node-input-min" style="align-self: center; margin: 0; width: unset;">Min:</label>            
+                        <input type="text" id="node-input-min" style="width:80px;">           
+                        <input type="text" id="node-input-minLabel" style="width:80px;">
+                </div>
+                <div class="red-ui-editableList-container gauge-linear-grid-row" style="padding-top: 8px;">
+                        <label for="node-input-max" style="align-self: center; margin: 0; width: unset;">Max:</label>            
+                        <input type="text" id="node-input-max" style="width:80px;">           
+                        <input type="text" id="node-input-maxLabel" style="width:80px;">
+                </div>
+            </div>
+        </div>    
+    </div>
+    
+    <div class="form-row node-input-ticks-container-row" id="gauge-linear-ticks-row">
+      <label><i class="fa fa-list"></i> Ticks</label>
+      <ol id="node-input-ticks-container"></ol>
+    </div>
+    
+    <div class="form-row">
+        <label><i class="fa fa-gear"></i> Bar</label>
+        <div class="gauge-linear-bar-edit-container">
+            <div class="gauge-linear-bar-edit">
+                <div class="gauge-linear-bar-edit-controls">
+                    <div>
+                        <label for='node-input-mode'><i class='fa fa-list'></i> Select Mode</label>
+                        <select id='node-input-mode'>
+                            <option value='default'>Default</option>
+                            <option value='fullBar'>Full Bar Color</option>         
+                            <option value='zeroCross'>Cross Zero</option>         
+                        </select>
+                    </div>
+                    <div>
+                        <label for="gauge-linear-color"><i class="fa fa-paint-brush"></i> Pick color</label>
+                        <input type="color" id="gauge-linear-color" style="width:80px;">
+
+                        <label class='gauge-linear-zerorange' for='gauge-linear-zero-range' style="width:30px;text-align: center;"> for</label>
+                        <select id='gauge-linear-zero-range' class='gauge-linear-zerorange'>
+                            <option value='positive'>Positive</option>
+                            <option value='negative'>Negative</option>
+                        </select>
+                    </div>
+                </div>
+                <p>Drag over the bar to apply the selected color to the desired cells</p>
+                <div class="gauge-linear-bar-edit-outcome"></div>
+                <div class="gauge-linear-bar-edit-limits"></div>
+                <div class="gauge-linear-bar-edit-buttons">
+                    <button type="button" id="gauge-linear-bar-edit-remove" class="red-ui-button red-ui-button-small">REMOVE CELL</button>
+                    <span class="gauge-linear-bar-edit-cell-count"></span>
+                    <button type="button" id="gauge-linear-bar-edit-add" class="red-ui-button red-ui-button-small">ADD CELL</button>
+                </div>
+                <div class="gauge-linear-bar-edit-hidden">
+                    <span id="gauge-linear-zero-color-positive"></span><span id="gauge-linear-zero-color-negative"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-icon"><i class="fa fa-hand"></i>Icon</label>
+        <input type="text" id="node-input-icon">
+    </div>
+    <div class="form-row">
+        <label for="node-input-unit"><i class="fa fa-hand"></i>Unit</label>
+        <input type="text" id="node-input-unit">
+    </div>
+    <div class="form-row">
+        <label for="node-input-dim"><i class="fa fa-hand"></i>Dim</label>
+        <input type="number" id="node-input-dim" value="0.2" min="0.1" max="0.8" step="0.1">
+    </div>   
+    <div class="form-row">
+        <label for="node-input-myclass"><i class="fa fa-hand"></i>Class</label>
+        <input type="text" id="node-input-myclass">
+    </div>
+</script>
+
+<script type="text/markdown" data-help-name="ui-gauge-linear">
+A linear style gauge for Node-RED Dashboard 2.0.
+
+### Inputs
+
+: payload (number | string) :  The value to show on the gauge. If a string is passed in then it must represent a number.
+
+Certain configuration values can be overridden dynamically be passing in an object in `msg.ui_update`.  See Dynamic Properties below.
+
+### Configuration
+
+* **Name** - The name of the node.
+* **Group** - The display group in which to show the gauge.
+* **Size** - The size of the gauge on the dashboard.
+
+* **Limits Min and Max** - These specify the range of the gauge. Values are mandatory. Optionally you can configure labels for limits. If configured, the label is shown instead of value.
+* **Ticks** - This defines intermediate values under the gauge bar.  Each row defines the value of the tick and as for limits, optionally the label for tick can be configured.
+
+* **Bar** - The bar beahvior and colors. Select the mode first and the configure the colors and maybe count of the cells. You can always change the mode but whenever you have selected a mode which makes same color for all cells, you'll need configure the colors again. 
+    * **Select Mode** - Select the mode of the bar beahvior. **"Default"** - basic mode. **"Full Bar Color"** - all bar cells change the color based on value. **"Cross Zero"** - The left end of the bar is zero. The right end is even positiove or negative limit. The bar switches color based of value being positive or negative. If Min and Max are configured equally far from zero, it is possible to configre intermediate ticks. Otherwise ticks are not available for this mode.  
+
+    * **Pick Color** - Use color picker to select the color and then drag over the bar to apply the selected color to the desired cells. Repeat this step to apply different colors for different bar regions. Note that for **"Cross Zero"** mode it takes to configure different colors for positive and negative occurence. 
+
+    * **Add cell** - Adds a cell to the bar end. (if there is less than 60)
+    * **Remove cell** - Removes a cell from the bar end. (until there is only 2)
+
+* **Label** - A text label that is shown above the gauge's bar. 
+* **Icon** - An iconthat is shown in front of the gauge's bar. Gauge supports Material design icons.
+* **Unit** - The unit string to show in the gauge. 
+* **Dim** - The value for how much non-active cells will dim down. Number in range 0.1 - 0.8 
+
+* **Class** - A CSS Class that will be applied to the gauge to allow override of display element style.
+
+### Dynamic Properties
+
+Certain properties can be overridden by passing an object in `msg.ui_update`.  The name of the item in `msg.ui_update` is generally the name of the propety being overridden.  For example, the Ticks definitions may be changed by passing in array in `msg.ui_update.ticks`.  
+
+* **Colors** - If `msg.ui_update.colors` contains an array then that will be used to override all cells.  The array must contain a list of colors:  
+`["green","green","green","red"]`
+Define color for each cell.  
+* **Min** - If `msg.ui_update.min` is present and contains an object `{value:10}` or `{value:10,label:"Ten"}` then min limit of the gauge will be changed.
+* **Max** - If `msg.ui_update.max` is present and contains an object `{value:10}` or `{value:10,label:"Ten"}` then max limit of the gauge will be changed.
+* **Unit** - If `msg.ui_update.unit` is present and contains a string then that string will be displayed in the units field in the gauge.
+* **Ticks** - If `msg.ui_update.ticks` contains an array then that will be used to override all ticks. The format of the tick in the array is same as for min and max. `[{value:10},{value:30}]` or `[{value:10,label:"Ten"}]`
+* **ZeroCrossColors** - If `msg.ui_update.zeroCrossColors` contains an array then that will be used to override colros when gauge mode is Cross Zero. Two colors must be defined in array representing colors for negative and positive  `["red","green"]`
+
+### CSS overrides
+
+Display elements my be overriden in the normal way using a ui-template node.  In particular:
+
+**The color of the value**  
+```
+.myclass .hotnipi-gauge-linear-value{
+    color: red;
+}
+```
+
+### Other notes
+* **Count of cells** - The optimal count of the cells is about 20. Cell count is limited: min 2, max 60 .You are free to configure any amout of cells in this range but pay attention for 2 key things. 
+    * Too many elements may affect the performance of the dashboard. 
+    * The node is made responsive. If you are using it with small screen and there is not enough space to render elements, the gauge tries to hold important elements visible by removing less important elements. Every second cell is removed to keep other cells size reasonable. This also measn that if you configure single cell with one colr, it may be removed if conditions met.  
+
+</script>

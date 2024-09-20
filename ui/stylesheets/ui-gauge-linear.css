@@ -1,0 +1,142 @@
+.hotnipi-gauge-linear {
+    container-type: inline-size;
+    container-name: hotnipi-gauge-linear;
+}
+
+.hotnipi-gauge-linear-grid-2 {
+    display: grid;
+    grid-template-columns: 2rem auto;
+    gap: 1rem;
+    height: 100%;
+}
+
+.hotnipi-gauge-linear-grid-1 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    height: 100%;
+}
+
+.hotnipi-gauge-linear-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hotnipi-gauge-linear-icon .v-icon {
+    font-size: min(3rem, calc(var(--widget-row-height) * 1.1));
+}
+
+.hotnipi-gauge-linear-content {
+    container-type: inline-size;
+    container-name: level-content;
+    display: grid;
+    grid-template-rows: 1.3em minmax(3px, 1fr) .7em;
+    gap: 2px;
+    height: 100%;
+}
+
+.hotnipi-gauge-linear-text {
+    font-size: 1.25em;
+    line-height: 1em;
+    align-self: end;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: space-between;
+    user-select: none;
+    overflow: auto;
+}
+
+.hotnipi-gauge-linear-label {
+    font-size: min(1rem, 1.7cqh);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.hotnipi-gauge-linear-value {
+    font-size: min(1rem, 1.7cqh);
+    font-weight: bold;
+}
+
+.hotnipi-gauge-linear-unit {
+    font-size: min(0.75rem, 1.275cqh);
+    font-weight: normal;
+    padding-inline-start: 0.15em;
+}
+
+.hotnipi-gauge-linear-stripe {
+    display: flex;
+}
+
+.hotnipi-gauge-linear-led {
+    background: #ffffff;
+    width: 100%;
+    height: 100%;
+    border-left: 1px solid rgb(var(--v-theme-group-background));
+    border-right: 1px solid rgb(var(--v-theme-group-background));
+    border-radius: 0px;
+}
+
+.hotnipi-gauge-linear-limits {
+    display: block;
+    position: relative;
+    font-size: min(0.75rem, 1.275cqh);
+    line-height: 1;
+    user-select: none;
+}
+
+.hotnipi-gauge-linear-limit {
+    position: absolute;
+    transform: translate(-50%, 0);
+}
+
+.hotnipi-gauge-linear-limit:first-child {
+    left: 0;
+    transform: translate(0, 0);
+}
+
+.hotnipi-gauge-linear-limit:last-child {
+    right: 0;
+    transform: translate(0, 0);
+}
+
+@container level-content (width < 130px) {
+    .hotnipi-gauge-linear-led:nth-child(even) {
+        display: none;
+    }
+
+    .hotnipi-gauge-linear-limit:not(:first-child):not(:last-child) {
+        display: none;
+    }
+}
+
+@container level-content (width < 120px) {
+    .hotnipi-gauge-linear-label {
+        display: none;
+    }
+
+    .hotnipi-gauge-linear-text {
+        justify-content: flex-end;
+    }
+}
+
+@container hotnipi-gauge-linear (max-width: 160px) {
+    .hotnipi-gauge-linear-grid-2 {
+        grid-template-columns: 1rem auto;
+    }
+
+    .hotnipi-gauge-linear-icon .v-icon {
+        font-size: calc(var(--v-icon-size-multiplier)* 2em) !important;
+    }
+
+    @container style(--responsive-cut: icon) {
+        .hotnipi-gauge-linear-grid-2 {
+            grid-template-columns: 1fr;
+        }
+
+        .hotnipi-gauge-linear-icon {
+            display: none;
+        }
+    }
+}
