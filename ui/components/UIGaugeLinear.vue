@@ -82,7 +82,7 @@ export default {
     methods: {
         applyProperties:function(){
             const props = this.props
-            console.log(this.props)
+            //console.log(this.props)
             this.ticks = props.ticks;
             this.min = {
                 value:Number(props.min),

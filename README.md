@@ -71,4 +71,4 @@ Display elements my be overriden in the normal way using a ui-template node.  In
 ## Other notes
 * **Count of cells** - The optimal count of the cells is about 20. Cell count is limited: min 2, max 60 .You are free to configure any amout of cells in this range but pay attention for 2 key things. 
     * Too many elements may affect the performance of the dashboard. 
-    * The node is made responsive. If you are using it with small screen and there is not enough space to render elements, the gauge tries to hold important elements visible by removing less important elements. Every second cell is removed to keep other cells size reasonable. This also measn that if you configure single cell with one color, it may be removed if conditions met.  
+    * The node is made responsive. If you are using it with small screen and there is not enough space to render elements, the gauge tries to hold important elements visible by removing less important elements. Every second cell is removed to keep other cells size reasonable. This also means that if you configure single cell with one color, it may be removed if conditions met.  
