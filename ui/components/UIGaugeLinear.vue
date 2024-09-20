@@ -256,6 +256,10 @@ export default {
                 this.unit = msg.ui_update.unit
             }
 
+            if (msg.ui_update?.icon  &&  typeof msg.ui_update.icon === 'string') {
+                let i = msg.ui_update.icon                
+                this.icon = i.startsWith('mdi-') ? i : i == "" ? "" : "mdi-"+i
+            }
             if (Array.isArray(msg.ui_update?.colors)) {
                 this.colors = msg.ui_update.colors
                 this.$nextTick(() => {

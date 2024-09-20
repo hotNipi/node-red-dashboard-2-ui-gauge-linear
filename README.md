@@ -1,6 +1,6 @@
 # A linear type of gauge node for node-red dashboard 2.0
 
-A clinear type of gauge node for the flowfuse [Node-RED](https://nodered.org) Dashboard 2.0
+A linear type of gauge node for the flowfuse [Node-RED](https://nodered.org) Dashboard 2.0
 
 ## Install
 
@@ -23,6 +23,7 @@ Certain configuration values can be overridden dynamically be passing in an obje
 * **Name** - The name of the node.
 * **Group** - The display group in which to show the gauge.
 * **Size** - The size of the gauge on the dashboard.
+* **Label** - A text label that is shown above the gauge's bar. 
 
 * **Limits Min and Max** - These specify the range of the gauge. Values are mandatory. Optionally you can configure labels for limits. If configured, the label is shown instead of value.
 * **Ticks** - This defines intermediate values under the gauge bar.  Each row defines the value of the tick and as for limits, optionally the label for tick can be configured.
@@ -35,8 +36,8 @@ Certain configuration values can be overridden dynamically be passing in an obje
     * **Add cell** - Adds a cell to the bar end. (if there is less than 60)
     * **Remove cell** - Removes a cell from the bar end. (until there is only 2)
 
-* **Label** - A text label that is shown above the gauge's bar. 
-* **Icon** - An iconthat is shown in front of the gauge's bar. Gauge supports Material design icons.
+
+* **Icon** - An icon that is shown in front of the gauge's bar. Gauge supports Material design icons.
 * **Unit** - The unit string to show in the gauge. 
 * **Dim** - The value for how much non-active cells will dim down. Number in range 0.1 - 0.8 
 
@@ -54,6 +55,7 @@ Define color for each cell.
 * **Unit** - If `msg.ui_update.unit` is present and contains a string then that string will be displayed in the units field in the gauge.
 * **Ticks** - If `msg.ui_update.ticks` contains an array then that will be used to override all ticks. The format of the tick in the array is same as for min and max. `[{value:10},{value:30}]` or `[{value:10,label:"Ten"}]`
 * **ZeroCrossColors** - If `msg.ui_update.zeroCrossColors` contains an array then that will be used to override colros when gauge mode is Cross Zero. Two colors must be defined in array representing colors for negative and positive  `["red","green"]`
+* **Icon** - If `msg.ui_update.icon` is present and contains a icon name as string then gauge changes the icon. Note that you can not change the icon if you didn't configure the gauge to have icon.
 
 ### CSS overrides
 
