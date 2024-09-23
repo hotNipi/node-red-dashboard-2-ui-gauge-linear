@@ -2,6 +2,9 @@
 
 A linear type of gauge node for the flowfuse [Node-RED](https://nodered.org) Dashboard 2.0
 
+![image](https://github.com/user-attachments/assets/4572cd3e-a1e8-4549-affa-f5cb5e3eba2a)
+
+
 ## Install
 
 The usual method of installing is to use Manage Palette in the node red editor and search for @hotnipi/node-red-dashboard-2-ui-gauge-linear and install it.
