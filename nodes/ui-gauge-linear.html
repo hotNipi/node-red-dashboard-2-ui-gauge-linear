@@ -203,6 +203,9 @@
             })            
             
             hideOrShowZeroRange()
+            setTimeout(()=>{
+                favouriteColorList()
+            },100)
         },
         
         oneditsave: function() {
@@ -218,7 +221,7 @@
             node.colors = [];
             let cells = $(".gauge-linear-bar-edit-outcome").children()
             cells.each(function(i){
-                console.log("add",$(this).css('background-color'))
+                //console.log("add",$(this).css('background-color'))
                 node.colors.push($(this).css('background-color'))
            })
            node.zeroCrossColors = [];
@@ -284,6 +287,22 @@
 
     function updateCellCount(count){        
         $(".gauge-linear-bar-edit-cell-count").text(count)
+    }
+
+    function favouriteColorList(){
+        let cells = $(".gauge-linear-bar-edit-outcome").children()
+        let list = []
+        cells.each(function(i){
+            let c = rgbToHex($(this).css('background-color'))           
+            if(list.indexOf(c) == -1){
+                list.push(c)
+            }
+        })
+       
+        $('#gauge-linear-color-favourite').empty()
+        list.forEach(color => {
+            $('#gauge-linear-color-favourite').append("<option value='" + color + "'>");                
+        })
     }
     
     function fillLimits(){
@@ -372,6 +391,10 @@
             fillBarWithColor($("#gauge-linear-zero-color-"+side).text())
             $("#gauge-linear-color").val($("#gauge-linear-zero-color-"+side).text())          
         }
+    }
+    function rgbToHex(a){
+        a=a.replace(/[^\d,]/g,"").split(","); 
+        return"#"+((1<<24)+(+a[0]<<16)+(+a[1]<<8)+ +a[2]).toString(16).slice(1)
     }
 </script>
 
@@ -502,7 +525,8 @@
                     </div>
                     <div>
                         <label for="gauge-linear-color"><i class="fa fa-paint-brush"></i> Pick color</label>
-                        <input type="color" id="gauge-linear-color" style="width:80px;">
+                        <input type="color" id="gauge-linear-color" list="gauge-linear-color-favourite" style="width:80px;">
+                        <datalist id="gauge-linear-color-favourite"></datalist>
 
                         <label class='gauge-linear-zerorange' for='gauge-linear-zero-range' style="width:30px;text-align: center;"> for</label>
                         <select id='gauge-linear-zero-range' class='gauge-linear-zerorange'>
