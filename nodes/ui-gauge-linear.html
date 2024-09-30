@@ -587,7 +587,7 @@ Certain configuration values can be overridden dynamically be passing in an obje
 * **Ticks** - This defines intermediate values under the gauge bar.  Each row defines the value of the tick and as for limits, optionally the label for tick can be configured.
 
 * **Bar** - The bar beahvior and colors. Select the mode first and the configure the colors and maybe count of the cells. You can always change the mode but whenever you have selected a mode which makes same color for all cells, you'll need configure the colors again. 
-    * **Select Mode** - Select the mode of the bar beahvior. **"Default"** - basic mode. **"Full Bar Color"** - all bar cells change the color based on value. **"Cross Zero"** - The left end of the bar is zero. The right end is even positiove or negative limit. The bar switches color based of value being positive or negative. If Min and Max are configured equally far from zero, it is possible to configure intermediate ticks. Otherwise ticks are not available for this mode.  
+    * **Select Mode** - Select the mode of the bar beahvior. **"Default"** - basic mode. **"Full Bar Color"** - all bar cells change the color based on value. **"Cross Zero"** - The left end of the bar is zero. The right end is even positive or negative limit. The bar switches color based of value being positive or negative. If Min and Max are configured equally far from zero, it is possible to configure intermediate ticks. Otherwise ticks are not available for this mode.  
 
     * **Pick Color** - Use color picker to select the color and then drag over the bar to apply the selected color to the desired cells. Repeat this step to apply different colors for different bar regions. Note that for **"Cross Zero"** mode it takes to configure different colors for positive and negative occurence. 
 
@@ -610,6 +610,7 @@ Certain properties can be overridden by passing an object in `msg.ui_update`.  T
 Define color for each cell.  
 * **Min** - If `msg.ui_update.min` is present and contains an object `{value:10}` or `{value:10,label:"Ten"}` then min limit of the gauge will be changed.
 * **Max** - If `msg.ui_update.max` is present and contains an object `{value:10}` or `{value:10,label:"Ten"}` then max limit of the gauge will be changed.
+* **Label** - If `msg.ui_update.label` is present and contains a string then that string will be displayed in the label field in the gauge.
 * **Unit** - If `msg.ui_update.unit` is present and contains a string then that string will be displayed in the units field in the gauge.
 * **Ticks** - If `msg.ui_update.ticks` contains an array then that will be used to override all ticks. The format of the tick in the array is same as for min and max. `[{value:10},{value:30}]` or `[{value:10,label:"Ten"}]`
 * **ZeroCrossColors** - If `msg.ui_update.zeroCrossColors` contains an array then that will be used to override colros when gauge mode is Cross Zero. Two colors must be defined in array representing colors for negative and positive  `["red","green"]`
