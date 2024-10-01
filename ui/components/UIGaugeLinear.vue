@@ -264,23 +264,27 @@ export default {
                 let i = msg.ui_update.icon                
                 this.icon = i.startsWith('mdi-') ? i : i == "" ? "" : "mdi-"+i
             }
+            if (Array.isArray(msg.ui_update?.ticks)) {
+                this.ticks = msg.ui_update.ticks
+                rearrange = true               
+            }
             if (Array.isArray(msg.ui_update?.colors)) {
                 this.colors = msg.ui_update.colors
                 this.$nextTick(() => {
                     this.replaceColors()
-                })
-               
-            }
+                    this.lit()
+                })               
+            }            
             if (Array.isArray(msg.ui_update?.zeroCrossColors)) {
                 this.zeroCrossColors = msg.ui_update.zeroCrossColors
                 this.$nextTick(() => {
                     this.lit()
-                })
-               
+                })               
             }
             if(rearrange){
                 this.$nextTick(() => {
                     this.arrangeTicks()
+                    this.lit()
                 })
             }
         }
