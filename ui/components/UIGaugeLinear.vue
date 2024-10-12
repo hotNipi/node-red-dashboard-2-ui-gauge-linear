@@ -261,6 +261,9 @@ export default {
             if (msg.ui_update?.label  &&  typeof msg.ui_update.label === 'string') {
                 this.label = msg.ui_update.label
             }
+            if (msg.ui_update?.class  &&  typeof msg.ui_update.class === 'string') {
+                this.class = msg.ui_update.class
+            }
 
             if (msg.ui_update?.icon  &&  typeof msg.ui_update.icon === 'string') {
                 let i = msg.ui_update.icon                
