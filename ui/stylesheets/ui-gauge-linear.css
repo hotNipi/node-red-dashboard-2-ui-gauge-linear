@@ -53,10 +53,16 @@
     white-space: nowrap;
     overflow: hidden;
 }
+.hide-label .hotnipi-gauge-linear-label{
+    display:none;
+}
 
 .hotnipi-gauge-linear-value {
     font-size: min(1rem, 1.7cqh);
     font-weight: bold;
+}
+.hide-value .hotnipi-gauge-linear-value{
+    display:none;
 }
 
 .hotnipi-gauge-linear-unit {
@@ -89,6 +95,10 @@
 .hotnipi-gauge-linear-limit {
     position: absolute;
     transform: translate(-50%, 0);
+}
+
+.hide-limits .hotnipi-gauge-linear-limit{
+    display:none;
 }
 
 .hotnipi-gauge-linear-limit:first-child {

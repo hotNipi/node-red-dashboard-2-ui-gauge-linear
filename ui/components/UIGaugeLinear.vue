@@ -1,5 +1,5 @@
 <template>
-    <div class="hotnipi-gauge-linear" style="--responsive-cut:icon">
+    <div class="hotnipi-gauge-linear" :class="class" style="--responsive-cut:icon">
         <div :class="icon ? 'hotnipi-gauge-linear-grid-2':'hotnipi-gauge-linear-grid-1'">
             <div v-if="icon" class="hotnipi-gauge-linear-icon">
                 <v-icon aria-hidden="false">{{icon}}</v-icon>
@@ -71,7 +71,8 @@ export default {
             
             //no need to change those
             value:0,
-            previousValue:0,         
+            previousValue:0,
+            class: "",         
             inited:false,
             
         }
@@ -99,6 +100,7 @@ export default {
             this.dim = Number(props.dim)
             this.icon = props.icon.startsWith('mdi-') ? props.icon : props.icon == "" ? "" : "mdi-"+props.icon
             this.zeroCrossColors = props.zeroCrossColors
+            this.class = this.props.myclass
 
         },        
         getElement: function(name,base){        

@@ -63,7 +63,12 @@ Define color for each cell.
 
 ### CSS overrides
 
-Display elements my be overriden in the normal way using a ui-template node.  In particular:
+The label, value and limits can be hidden by adding pre-built modifier class names to the **Class** field:
+* To hide **label** add `hide-label` 
+* To hide **value** add `hide-value` 
+* To hide **limits and ticks** add `hide-limits`
+
+For more specific modifications of display elements override styles in the normal way using a ui-template node.  In particular:
 
 **The color of the value**  
 ```
@@ -71,6 +76,8 @@ Display elements my be overriden in the normal way using a ui-template node.  In
     color: red;
 }
 ```
+
+
 
 ## Other notes
 * **Count of cells** - The optimal count of the cells is about 20. Cell count is limited: min 2, max 60 .You are free to configure any amout of cells in this range but pay attention for 2 key things. 
