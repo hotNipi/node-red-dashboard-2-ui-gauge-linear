@@ -57,6 +57,10 @@
     display:none;
 }
 
+.hide-label .hotnipi-gauge-linear-text{
+    justify-content: flex-end;
+}
+
 .hotnipi-gauge-linear-value {
     font-size: min(1rem, 1.7cqh);
     font-weight: bold;
