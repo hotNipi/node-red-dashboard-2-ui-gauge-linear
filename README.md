@@ -2,7 +2,8 @@
 
 A linear type of gauge node for the flowfuse [Node-RED](https://nodered.org) Dashboard 2.0
 
-![linear gauge for node-red dashboard 2.0](https://github.com/user-attachments/assets/4572cd3e-a1e8-4549-affa-f5cb5e3eba2a)
+![hotnipi-gauge-linear](https://github.com/user-attachments/assets/53c73176-4d2d-4e67-89fd-1b39f3494212)
+
 
 
 ## Install
