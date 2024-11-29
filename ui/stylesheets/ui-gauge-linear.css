@@ -78,6 +78,19 @@
 .hotnipi-gauge-linear-stripe {
     display: flex;
 }
+.hotnipi-gauge-linear-stripe-solid {
+    display: block;
+    position: relative;
+}
+.hotnipi-gauge-linear-bar {
+    background: #ffffff;
+    position: absolute;
+    left:0;
+    top:0;
+    width: 100%;
+    height: 100%;
+    transition: width 0.8s ease-in-out;   
+}
 
 .hotnipi-gauge-linear-led {
     background: #ffffff;

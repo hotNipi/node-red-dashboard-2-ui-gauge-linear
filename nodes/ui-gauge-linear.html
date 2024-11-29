@@ -60,12 +60,17 @@
                 value:"default",
                 required: true
             },
+            bar:{
+                value:"segmented",
+                required: true
+            },
             minLabel: {value: ""},           
             maxLabel: {value: ""},           
             label: {value: "Gauge Linear"},
             icon:{value:""},           
             unit: {value: "°C"},
             dim: {value: 0.2},
+            property: { value: "payload", required: true },
             myclass: {value: ""},
         },
         inputs: 1,
@@ -78,11 +83,22 @@
         oneditprepare: function () {
             let node = this
             const COLORS = ["#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#00e300","#ffa916","#ffa916","#ffa916","#ffa916","#ff4c16","#ff4c16"]
+            let defaultColors = COLORS.map((c,i) => {
+                return {color:c,size:COLORS.length-i}
+            })           
             $('#node-input-size').elementSizer({
                 width: '#node-input-width',
                 height: '#node-input-height',
                 group: '#node-input-group'
             });
+
+            if (this.property === undefined) {
+                $("#node-input-property").val("payload");
+            }
+            $("#node-input-property").typedInput({ default: 'msg', types: ['msg'] });
+            if (this.bar === undefined) {
+                $("#node-input-bar").val("segmented");
+            }
 
             let tickList = $("#node-input-ticks-container")
             tickList.editableList({
@@ -108,6 +124,7 @@
                     valueFiled.on("change keyup paste", function() {                       
                         validateTicks(tickList)
                         fillLimits()
+                        createSolidBarItems()
                     });
 
                     const labelFiled = $('<input/>', {
@@ -116,12 +133,13 @@
                         class: 'node-input-tick-label'
                     }).appendTo(row)
                     labelFiled.val(tick.label)
-                    labelFiled.on("change keyup paste", function() {                       
-                        fillLimits()
+                    labelFiled.on("change keyup paste", function() { 
+                        fillLimits()                                             
                     });
                     if (isNew) {
                         validateTicks(tickList)
                         fillLimits()
+                        createSolidBarItems()
                     }
                 },
 
@@ -139,56 +157,94 @@
                 removeItem: function(data) {                    
                     validateTicks(tickList)
                     fillLimits()
+                    createSolidBarItems()
                 },
 
                 sortItems: function(items) {                   
                     validateTicks(tickList)
+                    createSolidBarItems()                    
                 }
             })
 
             this.ticks = this.ticks || []
             tickList.editableList('addItems', this.ticks)
             validateTicks(tickList)
+          
 
             $("#node-input-max").change(function(){
                 validateTicks(tickList)
                 hideOrShowTickFields()
                 fillLimits()
+                createSolidBarItems()
             })
             
             $("#node-input-min").change(function(){
                 validateTicks(tickList)
                 hideOrShowTickFields()
                 fillLimits()
+                createSolidBarItems()
             })
             
             $("#node-input-maxLabel").change(function(){               
                 fillLimits()
+                
             })
            
             $("#node-input-minLabel").change(function(){               
-                fillLimits()
+                fillLimits()                
+            })
+
+            $('#node-input-bar').change(function(){ 
+                if($('#node-input-bar option:selected').val() == 'segmented'){
+
+                    $('.gauge-linear-bar-edit-outcome-segmented').show()
+                    $('#gauge-linear-dim-row').show()      
+                    $('.gauge-linear-bar-edit-buttons').show()                    
+                    $('.gauge-linear-bar-edit-outcome-solid').hide()      
+                    hideOrShowTickFields()
+                    fillLimits()                   
+                    hideOrShowZeroRange()
+                } 
+                else{
+
+                    $('.gauge-linear-bar-edit-outcome-segmented').hide()
+                    $('#gauge-linear-dim-row').hide()
+                    $('.gauge-linear-bar-edit-buttons').hide()
+                    $('.gauge-linear-bar-edit-outcome-solid').show()                    
+                } 
             })
 
 
-            this.colors = this.colors.length == 0 ? COLORS : this.colors
+            this.colors = this.colors.length == 0 ? defaultColors : this.colors           
             this.colors.forEach(c => {
-                createBarItem(c)
+                createSegmentedBarItem(c)
             })
+            createSolidBarItems(this.colors)
+            
+            if($('#node-input-bar').val() == 'segmented'){
+                $('.gauge-linear-bar-edit-outcome-segmented').show()
+                $('.gauge-linear-bar-edit-outcome-solid').hide() 
+            }
+            else{
+                $('.gauge-linear-bar-edit-outcome-segmented').hide()
+                $('.gauge-linear-bar-edit-outcome-solid').show()                
+            }
 
             $("#gauge-linear-color").val(COLORS[0])
 
             $("#gauge-linear-bar-edit-add").on("click",function( event ) { 
-                createBarItem($("#gauge-linear-color").val())
+                createSegmentedBarItem($("#gauge-linear-color").val())
             })
             
             $("#gauge-linear-bar-edit-remove").on("click",function( event ) { 
-                removeBarItem()
+                removeSegmentedBarItem()
             })
             
-            $('#node-input-mode').change(function(){               
+            $('#node-input-mode').change(function(){   
+          
                 hideOrShowTickFields()
                 fillLimits()
+                createSolidBarItems()
                 hideOrShowZeroRange()
             })
 
@@ -218,17 +274,33 @@
                     label: $(this).find('.node-input-tick-label').val()
                 })
             });
+            node.ticks.sort((a,b) => a.value - b.value)
             node.colors = [];
-            let cells = $(".gauge-linear-bar-edit-outcome").children()
+           
+            let cells
+            if($('#node-input-bar option:selected').val() == 'segmented'){
+                cells = $(".gauge-linear-bar-edit-outcome-segmented").children()
+            }else{
+                cells = $(".gauge-linear-bar-edit-outcome-solid").children()
+            }
+
             cells.each(function(i){
-                //console.log("add",$(this).css('background-color'))
-                node.colors.push($(this).css('background-color'))
-           })
+                node.colors.push({size:parseFloat($(this).css('max-width')),color:$(this).css('background-color')})
+           }) 
            node.zeroCrossColors = [];
            node.zeroCrossColors.push($("#gauge-linear-zero-color-negative").text())
            node.zeroCrossColors.push($("#gauge-linear-zero-color-positive").text())
         },
     })
+
+    function getSolidColors(){
+        let cells = $(".gauge-linear-bar-edit-outcome-solid").children()
+        let colors = []
+        cells.each(function(i){
+            colors.push($(this).css('background-color'))
+        })
+        return colors
+    }
 
     function validateTicks(tickList) {
         const valueFields = tickList.find(".node-input-tick-value")
@@ -246,27 +318,102 @@
         })
     }
 
-    function createBarItem(color){    
-        if($(".gauge-linear-bar-edit-outcome").children().length == 60){
+    function createSolidBarItems(initialColors){
+        let colors = []
+        if(initialColors){
+            colors = [...initialColors]
+        }
+        let co
+        let cells = $(".gauge-linear-bar-edit-outcome-solid").children()
+       
+        cells.each(function(i){
+            co={size:parseFloat($(this).css('max-width')),color:$(this).css('background-color')}           
+            colors.push(co)
+        })
+
+       // colors.sort((a,b) => a.size - b.size)
+        $('.gauge-linear-bar-edit-outcome-solid').empty()
+      
+        let ticks = []
+        const zeroCross = $('#node-input-mode').val() == "zeroCross";
+        const side = $('#gauge-linear-zero-range').val()
+
+        const getPosition = function (tv) {
+            const mi = Number($("#node-input-min").val())
+            const ma = Number($("#node-input-max").val())
+            if(zeroCross){
+                let v = Math.abs(tv)
+                let t = side == 'negative' ? Math.abs(mi) : ma
+                return Math.floor((v / t) * 100);
+            }
+            return Math.floor(((tv - mi) / (ma - mi)) * 100)
+        }
+        const getColor = (idx) => {
+            if(colors.length == 0){
+                return {color:"#00e300"} 
+            }
+            if(idx > colors.length-1){
+                return {color:"#00e300"} 
+            }
+            return colors[idx]
+        }
+
+        const tickItems = $("#node-input-ticks-container").editableList('items');
+        
+        tickItems.each(function(i) {            
+            ticks.push(              
+               getPosition(Number($(this).find('.node-input-tick-value').val()))
+            )
+        });
+        ticks.sort((a,b) => b-a)       
+        let item
+       
+       
+        if(zeroCross == false){           
+            ticks.forEach((tick,i) => {               
+                item = $("<div class='gauge-linear-bar-item-solid' style='max-width:"+tick+"%; background-color:"+getColor(i+1).color+";'></div>")
+                item.appendTo(".gauge-linear-bar-edit-outcome-solid")
+                item.on( "mousemove", function( event ) {            
+                    if(event.buttons == 1){                
+                        $(this).css("background-color",$("#gauge-linear-color").val())
+                    }
+                })
+            })
+        }
+        item = $("<div class='gauge-linear-bar-item-solid' style='max-width:100%; background-color:"+getColor(0).color+";'></div>")
+        item.on( "mousemove", function( event ) {            
+            if(event.buttons == 1){                
+                $(this).css("background-color",$("#gauge-linear-color").val())
+                if(zeroCross){
+                    const side = $('#gauge-linear-zero-range').val()               
+                    $("#gauge-linear-zero-color-"+side).text($("#gauge-linear-color").val())
+                }
+            }
+        })
+        item.prependTo(".gauge-linear-bar-edit-outcome-solid")
+    }
+
+    function createSegmentedBarItem(color){    
+        if($(".gauge-linear-bar-edit-outcome-segmented").children().length == 60){
             return
         }     
-        const item = $("<div class='gauge-linear-bar-item' style='background-color:"+color+";'></div>")        
-        item.appendTo(".gauge-linear-bar-edit-outcome")
+        const item = $("<div class='gauge-linear-bar-item' style='background-color:"+color.color+";'></div>")        
+        item.appendTo(".gauge-linear-bar-edit-outcome-segmented")
         item.on( "mousemove", function( event ) {            
             if(event.buttons == 1){                
                 $(this).css("background-color",$("#gauge-linear-color").val())
                 maybeApplyForMore($("#gauge-linear-color").val())
             }
         })
-        updateCellCount($(".gauge-linear-bar-edit-outcome").children().length)
+        updateCellCount($(".gauge-linear-bar-edit-outcome-segmented").children().length)
     }
     
-    function removeBarItem(){
-        if($(".gauge-linear-bar-edit-outcome").children().length == 2){
+    function removeSegmentedBarItem(){
+        if($(".gauge-linear-bar-edit-outcome-segmented").children().length == 2){
             return
         }        
-        $(".gauge-linear-bar-edit-outcome").find("div:last").remove();
-        updateCellCount($(".gauge-linear-bar-edit-outcome").children().length)
+        $(".gauge-linear-bar-edit-outcome-segmented").find("div:last").remove();
+        updateCellCount($(".gauge-linear-bar-edit-outcome-segmented").children().length)
     }
 
     function maybeApplyForMore(color){
@@ -279,7 +426,11 @@
     }
     
     function fillBarWithColor(color){        
-        const items = $(".gauge-linear-bar-edit-outcome").children()
+        let items = $(".gauge-linear-bar-edit-outcome-segmented").children()
+        items.each(function(i){
+            $(this).css("background-color",color)
+        })
+        items = $('.gauge-linear-bar-edit-outcome-solid').children()
         items.each(function(i){
             $(this).css("background-color",color)
         })
@@ -290,10 +441,24 @@
     }
 
     function favouriteColorList(){
-        let cells = $(".gauge-linear-bar-edit-outcome").children()
+        
+        let cells
+        if($('#node-input-bar option:selected').val() == 'segmented'){
+            cells = $(".gauge-linear-bar-edit-outcome-segmented").children()
+        }else{
+            cells = $(".gauge-linear-bar-edit-outcome-solid").children()
+        }
+      
         let list = []
         cells.each(function(i){
-            let c = rgbToHex($(this).css('background-color'))           
+            let c = rgbToHex($(this).css('background-color')) 
+            if(list.indexOf(c) == -1){
+                list.push(c)
+            }         
+           
+        })
+        let some = ["#00e300","#ffa916","#ff4c16"]
+        some.map(c => {
             if(list.indexOf(c) == -1){
                 list.push(c)
             }
@@ -434,12 +599,28 @@
 .gauge-linear-bar-edit-buttons{
     padding-top: 8px;
 }
-.gauge-linear-bar-edit-outcome{
+.gauge-linear-bar-edit-outcome-segmented{
     display:flex;
+}
+.gauge-linear-bar-edit-outcome-solid{
+    display:block;
+    height:20px;
+    position: relative;
+    margin-bottom: 2px;
 }
 .gauge-linear-bar-item{
     height: 20px;
     width: 100%;
+    max-width:100%;
+    border: 1px solid black;
+    background-color: red;
+}
+.gauge-linear-bar-item-solid{
+    height: 20px;
+    width: 100%;
+    position: absolute;
+    left:0;
+    top:0;
     border: 1px solid black;
     background-color: red;
 }
@@ -471,11 +652,11 @@
 
 <script type="text/html" data-template-name="ui-gauge-linear">
     <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="node-red:common.label.name"></label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
     <div class="form-row">
-        <label for="node-input-group"><i class="fa fa-table"></i> Group</label>
+        <label for="node-input-group"><i class="fa fa-table"></i> <span data-i18n="ui-gauge-linear.label.group"></label>
         <input type="text" id="node-input-group">
     </div>
     <div class="form-row">
@@ -485,23 +666,27 @@
         <button class="editor-button" id="node-input-size"></button>
     </div>
     <div class="form-row">
-        <label for="node-input-label"><i class="fa fa-hand"></i>Label</label>
+        <label for="node-input-label"><i class="fa fa-hand"></i> <span data-i18n="ui-gauge-linear.label.label"></span></label>
         <input type="text" id="node-input-label" value="Gauge Linear">
     </div>
+    <div class="form-row">
+        <label for="node-input-property"><i class="fa fa-arrow-right"></i> <span data-i18n="ui-gauge-linear.label.input"></span></label>
+        <input type="text" id="node-input-property" style="min-width:261px;"/>
+    </div>
     <div class="form-row" >
-        <label><i class="fa fa-list"></i> Limits</label>
+        <label><i class="fa fa-list"></i> <span data-i18n="ui-gauge-linear.label.limits"></span></label>
         <div class="red-ui-editableList-border">
            <div class="red-ui-editableList-header gauge-linear-grid-row" style="padding-left:15px">
-                <div></div><div>Value</div><div>Label</div>
+                <div></div><div><span data-i18n="ui-gauge-linear.label.value"></span></div><div><span data-i18n="ui-gauge-linear.label.label"></span></div>
            </div>
             <div class="red-ui-editableList-container">
                 <div class="red-ui-editableList-container gauge-linear-grid-row" style="border-bottom: 1px solid var(--red-ui-form-input-border-color);">
-                        <label for="node-input-min" style="align-self: center; margin: 0; width: unset;">Min:</label>            
+                        <label for="node-input-min" style="align-self: center; margin: 0; width: unset;"><span data-i18n="ui-gauge-linear.label.min"></span>:</label>            
                         <input type="text" id="node-input-min" style="width:80px;">           
                         <input type="text" id="node-input-minLabel" style="width:80px;">
                 </div>
                 <div class="red-ui-editableList-container gauge-linear-grid-row" style="padding-top: 8px;">
-                        <label for="node-input-max" style="align-self: center; margin: 0; width: unset;">Max:</label>            
+                        <label for="node-input-max" style="align-self: center; margin: 0; width: unset;"><span data-i18n="ui-gauge-linear.label.max"></span>:</label>            
                         <input type="text" id="node-input-max" style="width:80px;">           
                         <input type="text" id="node-input-maxLabel" style="width:80px;">
                 </div>
@@ -510,42 +695,50 @@
     </div>
     
     <div class="form-row node-input-ticks-container-row" id="gauge-linear-ticks-row">
-      <label><i class="fa fa-list"></i> Ticks</label>
+      <label><i class="fa fa-list"></i> <span data-i18n="ui-gauge-linear.label.ticks"></span></label>
       <ol id="node-input-ticks-container"></ol>
     </div>
-    
+
     <div class="form-row">
-        <label><i class="fa fa-gear"></i> Bar</label>
+        <label for='node-input-bar'><i class='fa fa-gear'></i> <span data-i18n="ui-gauge-linear.label.bar"></span></label>
+        <select id='node-input-bar'>
+            <option value='segmented' data-i18n="ui-gauge-linear.label.segmented"></option>
+            <option value='solid' data-i18n="ui-gauge-linear.label.solid"></option>         
+        </select>
+    </div>
+    
+    <div class="form-row">       
         <div class="gauge-linear-bar-edit-container">
             <div class="gauge-linear-bar-edit">
                 <div class="gauge-linear-bar-edit-controls">
                     <div>
-                        <label for='node-input-mode'><i class='fa fa-list'></i> Select Mode</label>
+                        <label for='node-input-mode'><i class='fa fa-list'></i> <span data-i18n="ui-gauge-linear.label.select"></span></label>
                         <select id='node-input-mode'>
-                            <option value='default'>Default</option>
-                            <option value='fullBar'>Full Bar Color</option>         
-                            <option value='zeroCross'>Cross Zero</option>         
+                            <option value='default' data-i18n="ui-gauge-linear.label.default"></option>
+                            <option value='fullBar' data-i18n="ui-gauge-linear.label.fullbar"></option>         
+                            <option value='zeroCross' data-i18n="ui-gauge-linear.label.cross"></option>         
                         </select>
                     </div>
                     <div>
-                        <label for="gauge-linear-color"><i class="fa fa-paint-brush"></i> Pick color</label>
+                        <label for="gauge-linear-color"><i class="fa fa-paint-brush"></i> <span data-i18n="ui-gauge-linear.label.pick"></span></label>
                         <input type="color" id="gauge-linear-color" list="gauge-linear-color-favourite" style="width:80px;">
                         <datalist id="gauge-linear-color-favourite"></datalist>
 
-                        <label class='gauge-linear-zerorange' for='gauge-linear-zero-range' style="width:30px;text-align: center;"> for</label>
+                        <label class='gauge-linear-zerorange' for='gauge-linear-zero-range' style="width:30px;text-align: center;"> <span data-i18n="ui-gauge-linear.label.for"></span></label>
                         <select id='gauge-linear-zero-range' class='gauge-linear-zerorange'>
-                            <option value='positive'>Positive</option>
-                            <option value='negative'>Negative</option>
+                            <option value='positive' data-i18n="ui-gauge-linear.label.positive"></option>
+                            <option value='negative' data-i18n="ui-gauge-linear.label.negative"></option>
                         </select>
                     </div>
                 </div>
-                <p>Drag over the bar to apply the selected color to the desired cells</p>
-                <div class="gauge-linear-bar-edit-outcome"></div>
+                <p><span data-i18n="ui-gauge-linear.label.hint"></span></p>
+                <div class="gauge-linear-bar-edit-outcome-segmented"></div>
+                <div class="gauge-linear-bar-edit-outcome-solid"></div>
                 <div class="gauge-linear-bar-edit-limits"></div>
                 <div class="gauge-linear-bar-edit-buttons">
-                    <button type="button" id="gauge-linear-bar-edit-remove" class="red-ui-button red-ui-button-small">REMOVE CELL</button>
+                    <button type="button" id="gauge-linear-bar-edit-remove" class="red-ui-button red-ui-button-small" data-i18n="ui-gauge-linear.label.remove"></button>
                     <span class="gauge-linear-bar-edit-cell-count"></span>
-                    <button type="button" id="gauge-linear-bar-edit-add" class="red-ui-button red-ui-button-small">ADD CELL</button>
+                    <button type="button" id="gauge-linear-bar-edit-add" class="red-ui-button red-ui-button-small" data-i18n="ui-gauge-linear.label.add"></button>
                 </div>
                 <div class="gauge-linear-bar-edit-hidden">
                     <span id="gauge-linear-zero-color-positive"></span><span id="gauge-linear-zero-color-negative"></span>
@@ -554,91 +747,22 @@
         </div>
     </div>
     <div class="form-row">
-        <label for="node-input-icon"><i class="fa fa-hand"></i>Icon</label>
+        <label for="node-input-icon"><i class="fa fa-hand"></i><span data-i18n="ui-gauge-linear.label.icon"></span></label>
         <input type="text" id="node-input-icon">
     </div>
     <div class="form-row">
-        <label for="node-input-unit"><i class="fa fa-hand"></i>Unit</label>
+        <label for="node-input-unit"><i class="fa fa-hand"></i><span data-i18n="ui-gauge-linear.label.unit"></span></label>
         <input type="text" id="node-input-unit">
     </div>
-    <div class="form-row">
-        <label for="node-input-dim"><i class="fa fa-hand"></i>Dim</label>
+    <div class="form-row" id="gauge-linear-dim-row">
+        <label for="node-input-dim"><i class="fa fa-hand"></i><span data-i18n="ui-gauge-linear.label.dim"></span></label>
         <input type="number" id="node-input-dim" value="0.2" min="0.1" max="0.8" step="0.1">
     </div>   
     <div class="form-row">
-        <label for="node-input-myclass"><i class="fa fa-hand"></i>Class</label>
+        <label for="node-input-myclass"><i class="fa fa-hand"></i><span data-i18n="ui-gauge-linear.label.class"></span></label>
         <input type="text" id="node-input-myclass">
     </div>
-</script>
-
-<script type="text/markdown" data-help-name="ui-gauge-linear">
-A linear style gauge for Node-RED Dashboard 2.0.
-
-### Inputs
-
-: payload (number | string) :  The value to show on the gauge. If a string is passed in then it must represent a number.
-
-Certain configuration values can be overridden dynamically be passing in an object in `msg.ui_update`.  See Dynamic Properties below.
-
-### Configuration
-
-* **Name** - The name of the node.
-* **Group** - The display group in which to show the gauge.
-* **Size** - The size of the gauge on the dashboard.
-* **Label** - A text label that is shown above the gauge's bar. 
-
-* **Limits Min and Max** - These specify the range of the gauge. Values are mandatory. Optionally you can configure labels for limits. If configured, the label is shown instead of value.
-* **Ticks** - This defines intermediate values under the gauge bar.  Each row defines the value of the tick and as for limits, optionally the label for tick can be configured.
-
-* **Bar** - The bar beahvior and colors. Select the mode first and the configure the colors and maybe count of the cells. You can always change the mode but whenever you have selected a mode which makes same color for all cells, you'll need configure the colors again. 
-    * **Select Mode** - Select the mode of the bar beahvior. **"Default"** - basic mode. **"Full Bar Color"** - all bar cells change the color based on value. **"Cross Zero"** - The left end of the bar is zero. The right end is even positive or negative limit. The bar switches color based of value being positive or negative. If Min and Max are configured equally far from zero, it is possible to configure intermediate ticks. Otherwise ticks are not available for this mode.  
-
-    * **Pick Color** - Use color picker to select the color and then drag over the bar to apply the selected color to the desired cells. Repeat this step to apply different colors for different bar regions. Note that for **"Cross Zero"** mode it takes to configure different colors for positive and negative occurence. 
-
-    * **Add cell** - Adds a cell to the bar end. (if there is less than 60)
-    * **Remove cell** - Removes a cell from the bar end. (until there is only 2)
-
-
-* **Icon** - An icon that is shown in front of the gauge's bar. Gauge supports Material Design Icons.
-* **Unit** - The unit string to show in the gauge. 
-* **Dim** - The value for how much non-active cells will dim down. Number in range 0.1 - 0.8 
-
-* **Class** - A CSS Class that will be applied to the gauge to allow override of display element style.
-
-### Dynamic Properties
-
-Certain properties can be overridden by passing an object in `msg.ui_update`.  The name of the item in `msg.ui_update` is generally the name of the propety being overridden.  For example, the Ticks definitions may be changed by passing in array in `msg.ui_update.ticks`.  
-
-* **Colors** - If `msg.ui_update.colors` contains an array then that will be used to override all cells.  The array must contain a list of colors:  
-`["green","green","green","red"]`
-Define color for each cell.  
-* **Min** - If `msg.ui_update.min` is present and contains an object `{value:10}` or `{value:10,label:"Ten"}` then min limit of the gauge will be changed.
-* **Max** - If `msg.ui_update.max` is present and contains an object `{value:10}` or `{value:10,label:"Ten"}` then max limit of the gauge will be changed.
-* **Label** - If `msg.ui_update.label` is present and contains a string then that string will be displayed in the label field in the gauge.
-* **Unit** - If `msg.ui_update.unit` is present and contains a string then that string will be displayed in the units field in the gauge.
-* **Ticks** - If `msg.ui_update.ticks` contains an array then that will be used to override all ticks. The format of the tick in the array is same as for min and max. `[{value:10},{value:30}]` or `[{value:10,label:"Ten"}]`
-* **ZeroCrossColors** - If `msg.ui_update.zeroCrossColors` contains an array then that will be used to override colros when gauge mode is Cross Zero. Two colors must be defined in array representing colors for negative and positive  `["red","green"]`
-* **Icon** - If `msg.ui_update.icon` is present and contains a icon name as string then gauge changes the icon. Note that you can not change the icon if you didn't configure the gauge to have icon.
-
-### CSS overrides
-
-The label, value and limits can be hidden by adding pre-built modifier class names to the **Class** field:
-* To hide **label** add `hide-label` 
-* To hide **value** add `hide-value` 
-* To hide **limits and ticks** add `hide-limits`
-
-For more specific modifications of display elements override styles in the normal way using a ui-template node.  In particular:
-
-**The color of the value**  
-```
-.myclass .hotnipi-gauge-linear-value{
-    color: red;
-}
-```
-
-### Other notes
-* **Count of cells** - The optimal count of the cells is about 20. Cell count is limited: min 2, max 60 .You are free to configure any amout of cells in this range but pay attention for 2 key things. 
-    * Too many elements may affect the performance of the dashboard. 
-    * The node is made responsive. If you are using it with small screen and there is not enough space to render elements, the gauge tries to hold important elements visible by removing less important elements. Every second cell is removed to keep other cells size reasonable. This also means that if you configure single cell with one colr, it may be removed if conditions met.  
-
+    <div class="form-row">
+        <a href="https://buymeacoffee.com/hotnipi" target="_blank"><i class="fa fa-coffee"></i><span style="margin-left:4px;" data-i18n="ui-gauge-linear.label.coffee"></span></label></a>       
+    </div>
 </script>

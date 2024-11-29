@@ -17,8 +17,10 @@ module.exports = function (RED) {
             onInput: function (msg, send, done) {                
                 // pick up existing stored data
                 let storedData = base.stores.data.get(node.id)
-                if (typeof msg.payload != "undefined") {
-                    storedData.payload = msg.payload                    
+                let val = RED.util.getMessageProperty(msg, config.property)                         
+                if (typeof val != "undefined") {
+                    storedData.payload = val
+                    msg.payload = val                    
                 }
                 //console.log(`onInput storedData: ${JSON.stringify(storedData)}\n\n`)
 

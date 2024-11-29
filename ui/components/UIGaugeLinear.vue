@@ -9,8 +9,12 @@
                     <span class="hotnipi-gauge-linear-label">{{label}}</span>
                     <span class="hotnipi-gauge-linear-value">{{formattedValue}}<span class="hotnipi-gauge-linear-unit">{{unit}}</span></span>
                 </div>
-                <div class="hotnipi-gauge-linear-stripe">
-                    <div v-for="(color, index) in colors" :key="index" class="hotnipi-gauge-linear-led" :ref="'dot-' + index"></div>
+                <div v-if="bar=='segmented'" class="hotnipi-gauge-linear-stripe">
+                    <div v-for="(color, index) in colors" :key="index" class="hotnipi-gauge-linear-led" :ref="'dot-' + index" :style="'background-color:'+color.color+';'"></div>
+                </div>
+                <div v-if="bar=='solid'" class="hotnipi-gauge-linear-stripe-solid">
+                    <div v-if="mode!='fullBar'" v-for="(color, index) in colors"  :key="index" :id="'bar-'+index" :style="'background-color:'+color.color+';max-width:'+color.size+'%;'" class="hotnipi-gauge-linear-bar" :ref="'bar-' + index"></div>
+                    <div v-if="mode=='fullBar'" class="hotnipi-gauge-linear-bar" ref="bar"></div>
                 </div>
                 <div class="hotnipi-gauge-linear-limits">
                     <span class="hotnipi-gauge-linear-limit">{{labelFor(min)}}</span>
@@ -47,7 +51,7 @@ export default {
             
             animate:true, // Animating led's is not most performant thing in the world. 
             
-            colors:[ 
+            colors:[/*  
                 "#57b9ff",
                 "#57b9ff",
                 "#57b9ff",
@@ -63,13 +67,14 @@ export default {
                 "#ff4c16", 
                 "#ff4c16", 
                 "#ff4c16",                
-                "#ff4c16"],
+                "#ff4c16" */],
                 
             ticks:[],
+            bar:"segmented",
             mode:"default", //zeroCross , fullBar , default        
             zeroCrossColors:["#ff4c16","#00e300"],
             
-            //no need to change those
+           
             value:0,
             previousValue:0,
             class: "",         
@@ -83,7 +88,6 @@ export default {
     methods: {
         applyProperties:function(){
             const props = this.props
-            //console.log(this.props)
             this.ticks = props.ticks;
             this.min = {
                 value:Number(props.min),
@@ -95,8 +99,10 @@ export default {
             }
             this.colors = props.colors
             this.mode = props.mode
+            this.bar = props.bar
             this.label = props.label
             this.unit = props.unit
+            this.property = props.property ?? "payload"
             this.dim = Number(props.dim)
             this.icon = props.icon.startsWith('mdi-') ? props.icon : props.icon == "" ? "" : "mdi-"+props.icon
             this.zeroCrossColors = props.zeroCrossColors
@@ -164,6 +170,13 @@ export default {
             p += this.dim;
             return p;
         },
+        segmentedFullBarColor: function(){
+
+            let f = this.full()-1
+            f = Math.min(f,this.colors.length-1)
+            f = Math.max(f,0)
+            return this.colors[f].color
+        },
         
         tickPosition: function(tv){
             if(this.mode == "zeroCross"){
@@ -192,7 +205,7 @@ export default {
             this.colors.forEach((c,i) => {
                 let dot = this.getElement("dot-"+i);
                     if(dot){                        
-                        dot.style.backgroundColor = c  
+                        dot.style.backgroundColor = c.color
                     }                
                 }
             );
@@ -203,10 +216,14 @@ export default {
             if(this.inited == false){
                 return
             }
+            if(this.bar == "solid"){               
+                this.move()
+                return
+            }
             const down = this.previousValue > this.value
             let time = down ? 1 : 0.2
             let step = down ? 0.12 : 0.06
-            let ledColor = this.mode == "fullBar" ? this.colors[this.full()] : null
+            let ledColor = this.mode == "fullBar" ? this.segmentedFullBarColor() : null
             if(this.mode == "zeroCross"){
                 ledColor = this.value < 0 ? this.zeroCrossColors[0] : this.zeroCrossColors[1]                
             } 
@@ -235,6 +252,37 @@ export default {
             })
             this.previousValue = this.value
         },
+        move:function(){
+            let element
+            if(this.mode == "fullBar"){
+                element = this.getElement("bar",true);
+                let pos = 0
+                let last = this.ticks.findLastIndex(t => t.value < this.value)               
+                if(last > -1){
+                    pos = last + 1
+                }
+                if(pos > this.colors.length -1){
+                    pos = this.colors.length -1
+                }               
+                       
+                element.style.backgroundColor =  this.fullBarColors[pos].color
+                element.style.width = this.percentage + "%"
+            }
+            else{
+                this.colors.forEach((color,i) => {
+                    element = this.getElement("bar-"+i);
+                    if(!element){
+                        console.log("move() no bars found")
+                        return
+                    }
+                    element.style.width = this.percentage + "%"
+                    if(this.mode == "zeroCross"){
+                        element.style.backgroundColor = this.value < 0 ? this.zeroCrossColors[0] : this.zeroCrossColors[1]                
+                    }
+                })  
+            } 
+        },
+
         
         onPayload:function(msg) {
             if(msg?.payload != undefined){
@@ -326,25 +374,42 @@ export default {
 
 
         this.$nextTick(() => {
-            
             if(this.mode == "zeroCross"){
                 if(this.max.value != Math.abs(this.min.value)){
                     this.ticks = []
                 }
             }
+            let dot
             this.colors.forEach((c,i) => {
-                let dot = this.getElement("dot-"+i);
-                    if(!dot){                        
-                        return
-                    }                    
-                    dot.style.backgroundColor = c                    
-                }
-            );
+                    if(this.bar == "segmented"){
+                        dot = this.getElement("dot-"+i);
+                        if(!dot){                        
+                            return
+                        }                    
+                        dot.style.backgroundColor = c.color
+                    }
+                    else{
+                        if(this.mode != "fullBar"){                         
+                           
+                            dot = this.getElement("bar-"+i);
+                            if(!dot){                        
+                                return
+                            }
+                            dot.style.maxWidth = c.size+"%"                          
+                           
+                        }
+                    }                                   
+                });
+            if(this.mode == "fullBar" && this.bar == "solid"){
+                 this.fullBarColors = [...this.colors]
+                this.fullBarColors.reverse()
+
+            }   
             this.ticks.forEach((t,i) => {
                 let tick = this.getElement("tick-"+i);
                     if(!tick){                        
                         return
-                    }                    
+                    }                                  
                     tick.style.left = this.tickPosition(t.value)
                 }
             );

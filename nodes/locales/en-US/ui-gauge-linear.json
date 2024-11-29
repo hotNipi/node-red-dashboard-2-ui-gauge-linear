@@ -1,0 +1,34 @@
+{
+    "ui-gauge-linear": {
+        "label": {
+            "group": "Group",
+            "size": "Size",
+            "label": "Label",
+            "limits": "Limits",
+            "value":"Value",
+            "min": "Min",
+            "max": "Max",
+            "ticks": "Ticks",
+            "bar": "Bar",
+            "segmented": "Segmented",
+            "solid": "Solid",
+            "select":"Select mode",
+            "default":"Default",
+            "fullbar":"Full Bar Color",
+            "cross":"Cross Zero",
+            "pick":"Pick Color",
+            "positive":"Positive",
+            "negative":"Negative",
+            "hint":"Drag over the bar to apply the selected color to the desired cells",
+            "for":"for",
+            "remove":"REMOVE CELL",
+            "add":"ADD CELL",
+            "icon":"Icon",
+            "unit":"Unit",
+            "dim":"Dim",
+            "class":"Class",
+            "coffee":"Coffee",
+            "input":"Input"
+        }
+    }
+}

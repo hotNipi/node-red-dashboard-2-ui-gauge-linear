@@ -16,7 +16,7 @@ npm install @hotnipi/node-red-dashboard-2-ui-gauge-linear
 
 ## Inputs
 
-Pass the value in `msg.payload`.  This may be a Number or a string that represents a number.
+Pass the value in configured property or as default `msg.payload`.  This may be a Number or a string that represents a number.
 
 
 Certain configuration values can be overridden dynamically be passing in an object in `msg.ui_update`.  See Dynamic Properties below.  
@@ -27,12 +27,13 @@ Certain configuration values can be overridden dynamically be passing in an obje
 * **Group** - The display group in which to show the gauge.
 * **Size** - The size of the gauge on the dashboard.
 * **Label** - A text label that is shown above the gauge's bar. 
+* **Input** - Configured input property should carry single numeric value. 
 
 * **Limits Min and Max** - These specify the range of the gauge. Values are mandatory. Optionally you can configure labels for limits. If configured, the label is shown instead of value.
 * **Ticks** - This defines intermediate values under the gauge bar.  Each row defines the value of the tick and as for limits, optionally the label for tick can be configured.
 
-* **Bar** - The bar beahvior and colors. Select the mode first and the configure the colors and maybe count of the cells. You can always change the mode but whenever you have selected a mode which makes same color for all cells, you'll need configure the colors again.
-    * **Select Mode** - Select the mode of the bar beahvior. **"Default"** - basic mode. **"Full Bar Color"** - all bar cells change the color based on value. **"Cross Zero"** - The left end of the bar is zero. The right end is even positive or negative limit. The bar switches color based of value being positive or negative. If Min and Max are configured equally far from zero, it is possible to configure intermediate ticks. Otherwise ticks are not available for this mode.  
+* **Bar** - The bar appearance. Bar can be segmented (led-like dots) or solid. For solid bar the bar colored sectors are defined by the ticks. 
+    * **Select Mode** - Select the mode of the bar beahvior. Select the mode first and the configure the colors and maybe count of the cells. You can always change the mode but whenever you have selected a mode which makes same color for all cells, you'll need configure the colors again. **"Default"** - basic mode. **"Full Bar Color"** - all bar cells change the color based on value. **"Cross Zero"** - The left end of the bar is zero. The right end is even positive or negative limit. The bar switches color based of value being positive or negative. If Min and Max are configured equally far from zero, it is possible to configure intermediate ticks. Otherwise ticks are not available for this mode.  
 
     * **Pick Color** - Use color picker to select the color and then drag over the bar to apply the selected color to the desired cells. Repeat this step to apply different colors for different bar regions. Note that for **"Cross Zero"** mode it takes to configure different colors for positive and negative occurence. 
 
@@ -82,4 +83,6 @@ For more specific modifications of display elements override styles in the norma
 ## Other notes
 * **Count of cells** - The optimal count of the cells is about 20. Cell count is limited: min 2, max 60 .You are free to configure any amout of cells in this range but pay attention for 2 key things. 
     * Too many elements may affect the performance of the dashboard. 
-    * The node is made responsive. If you are using it with small screen and there is not enough space to render elements, the gauge tries to hold important elements visible by removing less important elements. Every second cell is removed to keep other cells size reasonable. This also means that if you configure single cell with one color, it may be removed if conditions met.  
+    * The node is made responsive. If you are using it with small screen and there is not enough space to render elements, the gauge tries to hold important elements visible by removing less important elements. Every second cell is removed to keep other cells size reasonable. This also means that if you configure single cell with one color, it may be removed if conditions met.
+
+<a href="https://www.buymeacoffee.com/hotnipi" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-green.png" alt="Buy Me A Coffee" style="height: 40px !important;width:150px !important;" ></a>  
