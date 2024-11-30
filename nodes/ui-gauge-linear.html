@@ -71,6 +71,13 @@
             unit: {value: "°C"},
             dim: {value: 0.2},
             property: { value: "payload", required: true },
+            decimals:{
+                value:2,
+                validate:function(v) {                    
+                    return (RED.validators.number()(v) && Number(v) > 0 && Number(v) < 18)
+                },
+            },
+            zeros:{value:true},
             myclass: {value: ""},
         },
         inputs: 1,
@@ -98,6 +105,9 @@
             $("#node-input-property").typedInput({ default: 'msg', types: ['msg'] });
             if (this.bar === undefined) {
                 $("#node-input-bar").val("segmented");
+            }
+            if (this.decimals === undefined) {
+                $("#node-input-decimals").val(2);
             }
 
             let tickList = $("#node-input-ticks-container")
@@ -574,6 +584,10 @@
     grid-template-columns: 80px 1fr;
     gap:.5rem;
 }
+.gauge-linear-list-flexy-row{
+    display:inline-flex;
+    align-items: center;
+}
 .gauge-linear-bar-edit-container{
     border: 1px solid var(--red-ui-form-input-border-color);
     border-radius: 4px;
@@ -743,6 +757,18 @@
                 <div class="gauge-linear-bar-edit-hidden">
                     <span id="gauge-linear-zero-color-positive"></span><span id="gauge-linear-zero-color-negative"></span>
                 </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-decimals"><i class="fa fa-hand"></i><span data-i18n="ui-gauge-linear.label.decimals"></span></label>
+        <div class="gauge-linear-list-flexy-row">
+            <div>                
+                <input type="number" id="node-input-decimals" value="2" min="0" max="17" step="1">
+            </div>
+            <div>
+                <label style="width:auto" for="node-input-zeros"> <span data-i18n="ui-gauge-linear.label.zeros"></span></label>
+                <input type="checkbox" checked id="node-input-zeros" style="display: inline-block; width: auto; margin: 0px 0px 0px 4px;">
             </div>
         </div>
     </div>

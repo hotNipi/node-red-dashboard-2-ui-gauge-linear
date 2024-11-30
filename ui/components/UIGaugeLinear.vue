@@ -42,41 +42,24 @@ export default {
     },
     data(){
         return {                                                           
-            label:"Level zero cross", // The label
-            icon:"mdi-account", //(optional) the icon           
-            min:{value:0,label:""}, // Smallest expected value. (label, string, optional)
-            max:{value:100,label:""}, // Highest expected value. (label, string, optional)
-            unit:"cm³",// The unit of the measurement
-            dim:0.2, //How dim is led when not glowing 
+            label:"Level zero cross", 
+            icon:"mdi-account",        
+            min:{value:0,label:""}, 
+            max:{value:100,label:""}, 
+            unit:"cm³",
+            dim:0.2, 
             
-            animate:true, // Animating led's is not most performant thing in the world. 
+            animate:true, 
             
-            colors:[/*  
-                "#57b9ff",
-                "#57b9ff",
-                "#57b9ff",
-                "#57b9ff",               
-                "#00e300",
-                "#00e300",
-                "#00e300",
-                "#00e300",                
-                "#ffa916",
-                "#ffa916",
-                "#ffa916",
-                "#ffa916",                
-                "#ff4c16", 
-                "#ff4c16", 
-                "#ff4c16",                
-                "#ff4c16" */],
-                
+            colors:[],                
             ticks:[],
             bar:"segmented",
             mode:"default", //zeroCross , fullBar , default        
             zeroCrossColors:["#ff4c16","#00e300"],
-            
-           
             value:0,
             previousValue:0,
+            decimals:2,
+            zeros:true,
             class: "",         
             inited:false,
             
@@ -87,6 +70,7 @@ export default {
    
     methods: {
         applyProperties:function(){
+
             const props = this.props
             this.ticks = props.ticks;
             this.min = {
@@ -107,6 +91,8 @@ export default {
             this.icon = props.icon.startsWith('mdi-') ? props.icon : props.icon == "" ? "" : "mdi-"+props.icon
             this.zeroCrossColors = props.zeroCrossColors
             this.class = this.props.myclass
+            this.decimals = Number(props.decimals)
+            this.zeros = props.zeros
 
         },        
         getElement: function(name,base){        
@@ -346,7 +332,14 @@ export default {
     computed: {
         ...mapState('data', ['messages']),
         formattedValue: function () {
-            return this.value.toFixed(2)
+            let minDigits = this.zeros == true ? this.decimals : 0
+            const formatter = new Intl.NumberFormat("en", { 
+                useGrouping:false,
+                maximumFractionDigits: this.decimals ,
+                minimumFractionDigits: minDigits}
+            )
+
+            return formatter.format(this.value)
         },
         percentage: function(){
             let v = this.value

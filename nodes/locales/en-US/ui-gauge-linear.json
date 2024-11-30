@@ -28,7 +28,9 @@
             "dim":"Dim",
             "class":"Class",
             "coffee":"Coffee",
-            "input":"Input"
+            "input":"Input",
+            "decimals":"Decimals",
+            "zeros":"Keep zeros"
         }
     }
 }
