@@ -41,7 +41,7 @@ Certain configuration values can be overridden dynamically be passing in an obje
     * **Add cell** - Adds a cell to the bar end. (if there is less than 60)
     * **Remove cell** - Removes a cell from the bar end. (until there is only 2)
 
-
+* **Decimals** - The value is rounded down to configured decimals. **Keep zeros** keeps the trailing zeros. 
 * **Icon** - An icon that is shown in front of the gauge's bar. Gauge supports Material design icons.
 * **Unit** - The unit string to show in the gauge. 
 * **Dim** - The value for how much non-active cells will dim down. Number in range 0.1 - 0.8 
