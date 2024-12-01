@@ -385,8 +385,9 @@
                 item.appendTo(".gauge-linear-bar-edit-outcome-solid")
                 item.on( "mousemove", function( event ) {            
                     if(event.buttons == 1){                
-                        $(this).css("background-color",$("#gauge-linear-color").val())
+                        $(this).css("background-color",$("#gauge-linear-color").val())                        
                     }
+                    return false;
                 })
             })
         }
@@ -398,7 +399,9 @@
                     const side = $('#gauge-linear-zero-range').val()               
                     $("#gauge-linear-zero-color-"+side).text($("#gauge-linear-color").val())
                 }
+                
             }
+            return false;
         })
         item.prependTo(".gauge-linear-bar-edit-outcome-solid")
     }
@@ -414,6 +417,7 @@
                 $(this).css("background-color",$("#gauge-linear-color").val())
                 maybeApplyForMore($("#gauge-linear-color").val())
             }
+            return false;
         })
         updateCellCount($(".gauge-linear-bar-edit-outcome-segmented").children().length)
     }
