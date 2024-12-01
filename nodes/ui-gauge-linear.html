@@ -74,7 +74,7 @@
             decimals:{
                 value:2,
                 validate:function(v) {                    
-                    return (RED.validators.number()(v) && Number(v) > 0 && Number(v) < 18)
+                    return (RED.validators.number()(v) && Number(v) >= 0 && Number(v) < 18)
                 },
             },
             zeros:{value:true},
