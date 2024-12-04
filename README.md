@@ -44,7 +44,7 @@ Certain configuration values can be overridden dynamically be passing in an obje
 * **Decimals** - The value is rounded down to configured decimals. **Keep zeros** keeps the trailing zeros. 
 * **Icon** - An icon that is shown in front of the gauge's bar. Gauge supports Material design icons.
 * **Unit** - The unit string to show in the gauge. 
-* **Dim** - The value for how much non-active cells will dim down. Number in range 0.1 - 0.8 
+* **Dim** - The value for how much non-active cells will dim down. Number in range 0 - 0.9
 
 * **Class** - A CSS Class that will be applied to the gauge to allow override of display element style.
 

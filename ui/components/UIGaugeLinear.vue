@@ -346,9 +346,9 @@ export default {
             if(this.mode == "zeroCross"){
                 v = Math.abs(this.value)
                 let t = this.value < 0 ? Math.abs(this.min.value) : this.max.value
-                return Math.floor((v / t) * 100);
+                return Math.min(Math.floor((v / t) * 100),100);
             }
-            return Math.floor(((v - this.min.value) / (this.max.value - this.min.value)) * 100);
+            return Math.min(Math.floor(((v - this.min.value) / (this.max.value - this.min.value)) * 100),100);
         }
     },
     mounted(){               
