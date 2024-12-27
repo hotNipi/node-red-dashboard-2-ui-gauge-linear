@@ -99,7 +99,12 @@ export default {
             if(base){
                 return this.$refs[name]
             }
-            return this.$refs[name][0]
+            else{
+                if(this.$refs[name] && this.$refs[name].length){
+                    return this.$refs[name][0]
+                }
+            }
+            return null            
         },
         labelFor : function(property){
             let v = ""
@@ -188,15 +193,15 @@ export default {
             );
         },
         replaceColors:function(){
-            this.colors.forEach((c,i) => {
+            if(this.bar == "segmented"){
+                this.colors.forEach((c,i) => {
                 let dot = this.getElement("dot-"+i);
                     if(dot){                        
                         dot.style.backgroundColor = c.color
                     }                
                 }
-            );
-        },
-        
+            )}
+        },        
 
         lit: function(){
             if(this.inited == false){
