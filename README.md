@@ -53,8 +53,8 @@ Certain configuration values can be overridden dynamically be passing in an obje
 Certain properties can be overridden by passing an object in `msg.ui_update`.  The name of the item in `msg.ui_update` is generally the name of the propety being overridden.  For example, the Ticks definitions may be changed by passing in array in `msg.ui_update.ticks`.  
 
 * **Colors** - If `msg.ui_update.colors` contains an array then that will be used to override all cells.  The array must contain a list of colors:  
-`["green","green","green","red"]`
-Define color for each cell.  
+`["green","green","green","red"]` or an array of objects `[{ "color": "green" },{ "color": "green" },{ "color": "green" },{ "color": "red" }]`
+Define color for each cell. 
 * **Min** - If `msg.ui_update.min` is present and contains an object `{value:10}` or `{value:10,label:"Ten"}` then min limit of the gauge will be changed.
 * **Max** - If `msg.ui_update.max` is present and contains an object `{value:10}` or `{value:10,label:"Ten"}` then max limit of the gauge will be changed.
 * **Label** - If `msg.ui_update.label` is present and contains a string then that string will be displayed in the label field in the gauge.
@@ -62,6 +62,21 @@ Define color for each cell.
 * **Ticks** - If `msg.ui_update.ticks` contains an array then that will be used to override all ticks. The format of the tick in the array is same as for min and max. `[{value:10},{value:30}]` or `[{value:10,label:"Ten"}]`
 * **ZeroCrossColors** - If `msg.ui_update.zeroCrossColors` contains an array then that will be used to override colros when gauge mode is Cross Zero. Two colors must be defined in array representing colors for negative and positive  `["red","green"]`
 * **Icon** - If `msg.ui_update.icon` is present and contains a icon name as string then gauge changes the icon. Note that you can not change the icon if you didn't configure the gauge to have icon.
+
+* **NB!** Updating ticks for the solid bar is tricky.
+
+Ticks can not be changed alone, it takes also to change the colors.
+Every color must be defined with the size property and the value for that must be calculated:
+
+`Math.floor(((tv - mi) / (ma - mi)) * 100)`
+
+where:
+
+`tv = tick value, 
+mi = min value, 
+ma = max value`
+
+The colors in array must be objects in shape `{ "size": 60, "color": "green" }` 
 
 ### CSS overrides
 
