@@ -283,6 +283,7 @@ export default {
                     this.lit()
                 }
             }
+           
             let rearrange = false
             if (msg.ui_update?.min  &&  msg.ui_update?.min.value && typeof msg.ui_update?.min.value === 'number') {
                 this.min = msg.ui_update.min

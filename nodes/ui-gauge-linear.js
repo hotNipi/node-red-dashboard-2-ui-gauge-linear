@@ -2,6 +2,7 @@ module.exports = function (RED) {
     function UIGaugeLinearNode (config) {
         RED.nodes.createNode(this, config)
         const node = this
+        const dynamicProps = ["min","max","unit","label","class","icon","ticks","colors","zeroCrossColors"]
 
         // which group are we rendering this widget
         const group = RED.nodes.getNode(config.group)
@@ -14,39 +15,42 @@ module.exports = function (RED) {
         // server-side event handlers
         const evts = {
             onAction: true,
-            onInput: function (msg, send, done) {                
-                // pick up existing stored data
-                let storedData = base.stores.data.get(node.id)
+            beforeSend: function (msg) {
+                const updates = msg.ui_update
+                if (updates) {
+                    Object.keys(updates).forEach(k => {
+                        if(dynamicProps.includes(k)){                           
+                            if(k == "colors" && Array.isArray(updates[k])){
+                                updates[k].forEach((c,i) => {
+                                    if(typeof c == "string"){
+                                        updates[k][i] = {color:c}
+                                    }
+                                })          
+                            }                            
+                            base.stores.state.set(group.getBase(), node, msg, k, updates[k])
+                           // console.log("updating",k,'to',updates[k])
+                        }
+                    })                   
+                }
+                return msg
+            },
+            onInput: function (msg, send, done) { 
                 let val = RED.util.getMessageProperty(msg, config.property)                         
-                if (typeof val != "undefined") {
-                    storedData.payload = val
+                if (typeof val != "undefined") {                   
                     msg.payload = val                    
-                }
-                //console.log(`onInput storedData: ${JSON.stringify(storedData)}\n\n`)
-
-                // does msg.ui_update exist and is an object?
-                if (typeof msg.ui_update === 'object' && !Array.isArray(msg.ui_update) && msg.ui_update !== null) {
-                    // yes it does
-                    storedData.ui_update ??= {}    // initialise if necessary
-                    // merge in data from this message
-                    storedData.ui_update = {...storedData.ui_update, ...msg.ui_update}
-                } else {
-                    // delete any msg.ui_update so don't need to validate in clients
-                    delete msg.ui_update
-                }
-
-                // store the latest full set of values in our Node-RED datastore
-                //console.log(`leaving onInput storedData: ${JSON.stringify(storedData)}\n\n`)
-                base.stores.data.save(base, node, storedData)
-                // send the message with modified properties to the clients
+                }               
+                base.stores.data.save(base, node, msg)
                 send(msg)
             },
+
             onSocket: {
-                
+                connect: function (socket) {
+                    // Send the configuration values to the client-side widget
+                    socket.emit('widget-config:' + node.id, config);
+                }
             }
         }
 
-        // inform the dashboard UI that we are adding this node
         if (group) {
             group.register(node, config, evts)
         } else {
