@@ -17,9 +17,9 @@
                     <div v-if="mode=='fullBar'" class="hotnipi-gauge-linear-bar" ref="bar"></div>
                 </div>
                 <div class="hotnipi-gauge-linear-limits">
-                    <span class="hotnipi-gauge-linear-limit">{{labelFor(min)}}</span>
-                    <span v-for="(tick, index) in ticks" :key="index" class="hotnipi-gauge-linear-limit" :ref="'tick-' + index">{{labelFor(tick)}}</span>
-                    <span class="hotnipi-gauge-linear-limit">{{labelFor(max)}}</span>
+                    <span class="hotnipi-gauge-linear-limit">{{labelForMin()}}</span>
+                    <span v-for="(tick, index) in ticks" :key="index" class="hotnipi-gauge-linear-limit" :ref="'tick-' + index">{{labelForTick(tick)}}</span>
+                    <span class="hotnipi-gauge-linear-limit">{{labelForMax()}}</span>
                 </div>
             </div>
         </div>
@@ -44,8 +44,10 @@ export default {
         return {                                                           
             label:"Level zero cross", 
             icon:"mdi-account",        
-            min:{value:0,label:""}, 
-            max:{value:100,label:""}, 
+            min:0, 
+            max:10, 
+            minLabel:"",
+            maxLabel:"",
             unit:"cm³",
             dim:0.2, 
             
@@ -69,18 +71,13 @@ export default {
 
    
     methods: {
-        applyProperties:function(){
-
+        applyProperties:function(){  
             const props = this.props
             this.ticks = props.ticks;
-            this.min = {
-                value:Number(props.min),
-                label:props.minLabel
-            }
-            this.max = {
-                value:Number(props.max),
-                label:props.maxLabel
-            }
+            this.min = Number(props.min)
+            this.max = Number(props.max)
+            this.minLabel = props.minLabel
+            this.maxLabel = props.maxLabel
             this.colors = props.colors
             this.mode = props.mode
             this.bar = props.bar
@@ -93,7 +90,6 @@ export default {
             this.class = this.props.myclass
             this.decimals = Number(props.decimals)
             this.zeros = props.zeros
-
         },        
         getElement: function(name,base){        
             if(base){
@@ -106,28 +102,43 @@ export default {
             }
             return null            
         },
-        labelFor : function(property){
+        labelForMin: function(){
+            let v = ""
+            if(this.minLabel != ""){
+                v = this.minLabel
+            }
+            else{
+                v = this.min
+            }
+            if(this.mode == "zeroCross"){               
+                v = "0"               
+            }           
+            return v
+        },
+        labelForMax: function(){
+            let v = ""
+            if(this.maxLabel != ""){
+                v = this.maxLabel
+            }
+            else{
+                v = this.max
+            }
+            if(this.mode == "zeroCross"){               
+                if(this.value < 0){
+                    v = this.minLabel == "" ? this.min : this.minLabel
+                }
+                else{
+                    v = this.maxLabel == "" ? this.max : this.maxLabel
+                }               
+            }           
+            return v
+        },
+        labelForTick : function(property){
             let v = ""
             if(!property.label || property.label == ""){
                 v = property.value
-                /* if(this.mode == "zeroCross" && this.value < 0 && property.value != 0){
-                   v = property.value *-1;
-                } */
-                if(this.mode == "zeroCross"){
-                    if(property === this.min){
-                        v = "0"
-                    }
-                    else if(property === this.max){
-                        if(this.value < 0){
-                            v = this.min.value
-                        }
-                        else{
-                            v = this.max.value
-                        }
-                    }
-                    else{
-                        v = this.value < 0 ? property.value *-1 : property.value;
-                    }
+                if(this.mode == "zeroCross"){                    
+                    v = this.value < 0 ? property.value *-1 : property.value;                   
                 }
 
             }
@@ -172,15 +183,15 @@ export default {
         tickPosition: function(tv){
             if(this.mode == "zeroCross"){
                 let v = Math.abs(tv)
-                let t = this.value < 0 ? Math.abs(this.min.value) : this.max.value
+                let t = this.value < 0 ? Math.abs(this.min) : this.max
                 return Math.floor((v / t) * 100)+'%';
             }        
-            return Math.floor(((tv - this.min.value) / (this.max.value - this.min.value)) * 100)+'%';
+            return Math.floor(((tv - this.min) / (this.max - this.min)) * 100)+'%';
         },
         
         arrangeTicks:function(){
             if(this.mode == "zeroCross"){
-                if(this.max.value != Math.abs(this.min.value)){
+                if(this.max != Math.abs(this.min)){
                     this.ticks = []
                 }
             }            
@@ -286,11 +297,17 @@ export default {
            
             let rearrange = false
             if (msg.ui_update?.min  &&  msg.ui_update?.min.value && typeof msg.ui_update?.min.value === 'number') {
-                this.min = msg.ui_update.min
+                this.min = msg.ui_update.min.value
+                if(msg.ui_update?.min.label){
+                    this.minLabel = msg.ui_update.min.label
+                }
                 rearrange = true
             }
             if (msg.ui_update?.max  &&  msg.ui_update?.max.value && typeof msg.ui_update?.max.value === 'number') {
-                this.max = msg.ui_update.max
+                this.max = msg.ui_update.max.value
+                if(msg.ui_update?.max.label){
+                    this.maxLabel = msg.ui_update.max.label
+                }
                 rearrange = true
             }
             
@@ -351,10 +368,10 @@ export default {
             let v = this.value
             if(this.mode == "zeroCross"){
                 v = Math.abs(this.value)
-                let t = this.value < 0 ? Math.abs(this.min.value) : this.max.value
+                let t = this.value < 0 ? Math.abs(this.min) : this.max
                 return Math.min(Math.floor((v / t) * 100),100);
             }
-            return Math.min(Math.floor(((v - this.min.value) / (this.max.value - this.min.value)) * 100),100);
+            return Math.min(Math.floor(((v - this.min) / (this.max - this.min)) * 100),100);
         }
     },
     mounted(){               
@@ -374,7 +391,7 @@ export default {
 
         this.$nextTick(() => {
             if(this.mode == "zeroCross"){
-                if(this.max.value != Math.abs(this.min.value)){
+                if(this.max != Math.abs(this.min)){
                     this.ticks = []
                 }
             }

@@ -25,10 +25,32 @@ module.exports = function (RED) {
                                     if(typeof c == "string"){
                                         updates[k][i] = {color:c}
                                     }
-                                })          
+                                })  
+                                base.stores.state.set(group.getBase(), node, msg, k, updates[k])        
+                            }
+                            
+                            else if(k == "min"){
+                                if(updates[k].value != undefined){
+                                    base.stores.state.set(group.getBase(), node, msg, k, updates[k].value) 
+                                }
+                                if(updates[k].label != undefined){
+                                    base.stores.state.set(group.getBase(), node, msg, "minLabel", updates[k].label) 
+                                }
+
+                            }
+                            else if(k == "max"){
+                                if(updates[k].value != undefined){
+                                    base.stores.state.set(group.getBase(), node, msg, k, updates[k].value) 
+                                }
+                                if(updates[k].label != undefined){
+                                    base.stores.state.set(group.getBase(), node, msg, "maxLabel", updates[k].label) 
+                                }
+                            }
+                            else{
+                                base.stores.state.set(group.getBase(), node, msg, k, updates[k]) 
                             }                            
-                            base.stores.state.set(group.getBase(), node, msg, k, updates[k])
-                           // console.log("updating",k,'to',updates[k])
+                            
+                            //console.log("updating",k,'to',updates[k])
                         }
                     })                   
                 }
@@ -38,7 +60,8 @@ module.exports = function (RED) {
                 let val = RED.util.getMessageProperty(msg, config.property)                         
                 if (typeof val != "undefined") {                   
                     msg.payload = val                    
-                }               
+                }
+                console.log("storing",msg)               
                 base.stores.data.save(base, node, msg)
                 send(msg)
             },
