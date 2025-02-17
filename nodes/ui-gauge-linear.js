@@ -61,7 +61,7 @@ module.exports = function (RED) {
                 if (typeof val != "undefined") {                   
                     msg.payload = val                    
                 }
-                console.log("storing",msg)               
+                //console.log("storing",msg)               
                 base.stores.data.save(base, node, msg)
                 send(msg)
             },
