@@ -3,6 +3,8 @@
         "label": {
             "group": "Group",
             "size": "Size",
+            "width":"Width",
+            "height":"Height",
             "label": "Label",
             "limits": "Limits",
             "value":"Value",
@@ -31,6 +33,7 @@
             "input":"Input",
             "decimals":"Decimals",
             "zeros":"Keep zeros"
+            
         }
     }
 }

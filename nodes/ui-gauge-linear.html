@@ -83,9 +83,9 @@
         inputs: 1,
         outputs: 0,
         icon: "font-awesome/fa-ellipsis-h",
-        paletteLabel: "gauge linear",
+        paletteLabel: "NIPI linear",
         label: function() {
-            return this.name || "gauge linear";
+            return this.name || "NIPI linear";
         },
         oneditprepare: function () {
             let node = this
@@ -93,11 +93,22 @@
             let defaultColors = COLORS.map((c,i) => {
                 return {color:c,size:COLORS.length-i}
             })           
-            $('#node-input-size').elementSizer({
-                width: '#node-input-width',
-                height: '#node-input-height',
-                group: '#node-input-group'
-            });
+            if (RED.nodes.subflow(this.z)) {
+                // change inputs from hidden to text & display them
+                $('#node-input-width').attr('type', 'text')
+                $('#node-input-height').attr('type', 'text')
+                $('div.form-row.nr-db-ui-element-sizer-row').hide()
+                $('div.form-row.nr-db-ui-manual-size-row').show()
+            } else {
+                // not in a subflow, use the elementSizer
+                $('div.form-row.nr-db-ui-element-sizer-row').show()
+                $('div.form-row.nr-db-ui-manual-size-row').hide()
+                $('#node-input-size').elementSizer({
+                    width: '#node-input-width',
+                    height: '#node-input-height',
+                    group: '#node-input-group'
+                })
+            }
 
             if (this.property === undefined) {
                 $("#node-input-property").val("payload");
@@ -677,11 +688,23 @@
         <label for="node-input-group"><i class="fa fa-table"></i> <span data-i18n="ui-gauge-linear.label.group"></label>
         <input type="text" id="node-input-group">
     </div>
-    <div class="form-row">
+    <!-- <div class="form-row">
         <label><i class="fa fa-object-group"></i> <span data-i18n="ui-gauge-linear.label.size"></label>
         <input type="hidden" id="node-input-width">
         <input type="hidden" id="node-input-height">
         <button class="editor-button" id="node-input-size"></button>
+    </div> -->
+    <div class="form-row nr-db-ui-element-sizer-row">
+        <label><i class="fa fa-object-group"></i> <span data-i18n="ui-gauge-linear.label.size"></label>
+        <button class="editor-button" id="node-input-size"></button>
+    </div>
+    <div class="form-row nr-db-ui-manual-size-row">
+        <label><i class="fa fa-arrows-h"></i> <span data-i18n="ui-gauge-linear.label.width"></label>
+        <input type="hidden" id="node-input-width">
+    </div>
+    <div class="form-row nr-db-ui-manual-size-row">
+        <label><i class="fa fa-arrows-v"></i> <span data-i18n="ui-gauge-linear.label.height"></label>
+        <input type="hidden" id="node-input-height">
     </div>
     <div class="form-row">
         <label for="node-input-label"><i class="fa fa-hand"></i> <span data-i18n="ui-gauge-linear.label.label"></span></label>
